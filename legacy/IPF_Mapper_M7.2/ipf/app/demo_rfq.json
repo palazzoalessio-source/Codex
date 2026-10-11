@@ -1,0 +1,816 @@
+{
+  "name": "DEMO — Procurement RFQ AS-IS",
+  "functions": [
+    [
+      "ENG",
+      "Engineering",
+      110
+    ],
+    [
+      "PROC",
+      "Procurement",
+      250
+    ],
+    [
+      "SUP",
+      "Supplier",
+      390
+    ],
+    [
+      "MGT",
+      "Management",
+      570
+    ],
+    [
+      "LOG",
+      "Logistics",
+      710
+    ],
+    [
+      "EXP",
+      "Expediting",
+      850
+    ]
+  ],
+  "means": [
+    "Mail",
+    "ERP",
+    "Database",
+    "Phone",
+    "Teams",
+    "Web Portal",
+    "Generic"
+  ],
+  "elements": [
+    {
+      "code": "RDA_PREP",
+      "type": "ACTION",
+      "name": "Prepara RDA",
+      "performer": "ENG",
+      "xy": [
+        210,
+        120
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "2h"
+      }
+    },
+    {
+      "code": "TA",
+      "type": "ACTION",
+      "name": "Technical Alignment",
+      "performer": "ENG",
+      "xy": [
+        930,
+        120
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "4h",
+        "CRITICALITY": "TECHNICAL",
+        "CRITICALITY_SEVERITY": "HIGH",
+        "CRITICALITY_NOTE": "Specifica incompleta: richiede confronto con Engineering."
+      }
+    },
+    {
+      "code": "SPEC_REV",
+      "type": "ACTION",
+      "name": "Revisione specifica",
+      "performer": "ENG",
+      "xy": [
+        1170,
+        120
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "3h"
+      }
+    },
+    {
+      "code": "SEND",
+      "type": "ACTION",
+      "name": "Invia RFQ",
+      "performer": "PROC",
+      "xy": [
+        450,
+        260
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "1h"
+      }
+    },
+    {
+      "code": "RECEIVE",
+      "type": "ACTION",
+      "name": "Riceve offerte",
+      "performer": "PROC",
+      "xy": [
+        690,
+        260
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "30 min"
+      }
+    },
+    {
+      "code": "ANALYZE",
+      "type": "ACTION",
+      "name": "Analizza offerte",
+      "performer": "PROC",
+      "xy": [
+        930,
+        260
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "3h"
+      }
+    },
+    {
+      "code": "NEGOTIATE",
+      "type": "ACTION",
+      "name": "Negozia",
+      "performer": "PROC",
+      "xy": [
+        1410,
+        260
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "2h"
+      }
+    },
+    {
+      "code": "PO_ISSUE",
+      "type": "ACTION",
+      "name": "Emette PO",
+      "performer": "PROC",
+      "xy": [
+        1650,
+        260
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "1h"
+      }
+    },
+    {
+      "code": "A_QUOTE",
+      "type": "ACTION",
+      "name": "A · Prepara offerta",
+      "performer": "SUP",
+      "xy": [
+        450,
+        400
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "6h"
+      }
+    },
+    {
+      "code": "A_SEND",
+      "type": "ACTION",
+      "name": "A · Invia offerta",
+      "performer": "SUP",
+      "xy": [
+        690,
+        400
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "30 min"
+      }
+    },
+    {
+      "code": "B_QUOTE",
+      "type": "ACTION",
+      "name": "B · Prepara offerta",
+      "performer": "SUP",
+      "xy": [
+        450,
+        490
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "5h"
+      }
+    },
+    {
+      "code": "B_SEND",
+      "type": "ACTION",
+      "name": "B · Invia offerta",
+      "performer": "SUP",
+      "xy": [
+        690,
+        490
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "30 min"
+      }
+    },
+    {
+      "code": "QUOTE_REV",
+      "type": "ACTION",
+      "name": "Revisiona offerta",
+      "performer": "SUP",
+      "xy": [
+        1170,
+        400
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "4h",
+        "CRITICALITY": "REWORK",
+        "CRITICALITY_SEVERITY": "MEDIUM",
+        "CRITICALITY_NOTE": "Seconda offerta dopo modifica della specifica."
+      }
+    },
+    {
+      "code": "APPROVE",
+      "type": "ACTION",
+      "name": "Approva PO",
+      "performer": "MGT",
+      "xy": [
+        1650,
+        590
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "2h"
+      }
+    },
+    {
+      "code": "DELIVERY",
+      "type": "ACTION",
+      "name": "Pianifica consegna",
+      "performer": "LOG",
+      "xy": [
+        1650,
+        730
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "2h"
+      }
+    },
+    {
+      "code": "MONITOR",
+      "type": "ACTION",
+      "name": "Monitora ordine",
+      "performer": "EXP",
+      "xy": [
+        1650,
+        870
+      ],
+      "properties": {
+        "TARGET_CYCLE_TIME": "30 min"
+      }
+    },
+    {
+      "code": "RDA",
+      "type": "INFORMATION",
+      "name": "RDA",
+      "xy": [
+        210,
+        215
+      ]
+    },
+    {
+      "code": "RFQ",
+      "type": "INFORMATION",
+      "name": "RFQ",
+      "xy": [
+        210,
+        330
+      ]
+    },
+    {
+      "code": "OFFER_A",
+      "type": "INFORMATION",
+      "name": "Offerta A",
+      "xy": [
+        930,
+        400
+      ]
+    },
+    {
+      "code": "OFFER_B",
+      "type": "INFORMATION",
+      "name": "Offerta B",
+      "xy": [
+        930,
+        490
+      ]
+    },
+    {
+      "code": "SPEC",
+      "type": "INFORMATION",
+      "name": "Specifica revisionata",
+      "xy": [
+        1170,
+        215
+      ]
+    },
+    {
+      "code": "OFFER_REV",
+      "type": "INFORMATION",
+      "name": "Offerta revisionata",
+      "xy": [
+        1410,
+        400
+      ]
+    },
+    {
+      "code": "PO",
+      "type": "INFORMATION",
+      "name": "PO · EUR 620.000",
+      "xy": [
+        1410,
+        590
+      ],
+      "properties": {
+        "COST": 620000,
+        "CRITICALITY": "APPROVAL",
+        "CRITICALITY_SEVERITY": "HIGH",
+        "CRITICALITY_NOTE": "Verificare la policy di approvazione."
+      }
+    },
+    {
+      "code": "PLAN",
+      "type": "INFORMATION",
+      "name": "Piano consegna",
+      "xy": [
+        1410,
+        730
+      ]
+    },
+    {
+      "code": "REPORT",
+      "type": "INFORMATION",
+      "name": "Report expediting",
+      "xy": [
+        1410,
+        870
+      ]
+    },
+    {
+      "code": "GA",
+      "type": "PROCESS_GROUP",
+      "name": "Supplier A · RFQ",
+      "xy": [
+        210,
+        400
+      ]
+    },
+    {
+      "code": "GB",
+      "type": "PROCESS_GROUP",
+      "name": "Supplier B · RFQ",
+      "xy": [
+        210,
+        490
+      ]
+    }
+  ],
+  "groups": {
+    "GA": [
+      "A_QUOTE",
+      "A_SEND",
+      "OFFER_A"
+    ],
+    "GB": [
+      "B_QUOTE",
+      "B_SEND",
+      "OFFER_B"
+    ]
+  },
+  "flows": [
+    [
+      "RDA_PREP",
+      "SEND",
+      "RDA",
+      "Mail",
+      "1h"
+    ],
+    [
+      "SEND",
+      "A_QUOTE",
+      "RFQ",
+      "Web Portal",
+      "1d"
+    ],
+    [
+      "SEND",
+      "B_QUOTE",
+      "RFQ",
+      "Mail",
+      "1d"
+    ],
+    [
+      "A_QUOTE",
+      "A_SEND",
+      "OFFER_A",
+      "Database",
+      "30 min"
+    ],
+    [
+      "B_QUOTE",
+      "B_SEND",
+      "OFFER_B",
+      "Database",
+      "30 min"
+    ],
+    [
+      "A_SEND",
+      "RECEIVE",
+      "OFFER_A",
+      "Mail",
+      "2h"
+    ],
+    [
+      "B_SEND",
+      "RECEIVE",
+      "OFFER_B",
+      "Mail",
+      "3h"
+    ],
+    [
+      "RECEIVE",
+      "ANALYZE",
+      "OFFER_A",
+      "ERP",
+      "1h"
+    ],
+    [
+      "ANALYZE",
+      "TA",
+      "OFFER_A",
+      "Teams",
+      "2h"
+    ],
+    [
+      "TA",
+      "SPEC_REV",
+      "SPEC",
+      "Teams",
+      "1h"
+    ],
+    [
+      "SPEC_REV",
+      "QUOTE_REV",
+      "SPEC",
+      "Mail",
+      "1d"
+    ],
+    [
+      "QUOTE_REV",
+      "ANALYZE",
+      "OFFER_REV",
+      "Web Portal",
+      "2h"
+    ],
+    [
+      "ANALYZE",
+      "NEGOTIATE",
+      "OFFER_REV",
+      "Phone",
+      "4h"
+    ],
+    [
+      "NEGOTIATE",
+      "PO_ISSUE",
+      "PO",
+      "ERP",
+      "2h"
+    ],
+    [
+      "PO_ISSUE",
+      "APPROVE",
+      "PO",
+      "ERP",
+      "1d"
+    ],
+    [
+      "APPROVE",
+      "DELIVERY",
+      "PO",
+      "ERP",
+      "4h"
+    ],
+    [
+      "DELIVERY",
+      "MONITOR",
+      "PLAN",
+      "Mail",
+      "1d"
+    ]
+  ],
+  "information_links": [
+    [
+      "RDA_PREP",
+      "RDA",
+      "OUTPUT"
+    ],
+    [
+      "SEND",
+      "RFQ",
+      "OUTPUT"
+    ],
+    [
+      "ANALYZE",
+      "OFFER_A",
+      "INPUT"
+    ],
+    [
+      "ANALYZE",
+      "OFFER_B",
+      "INPUT"
+    ],
+    [
+      "PO_ISSUE",
+      "PO",
+      "OUTPUT"
+    ],
+    [
+      "DELIVERY",
+      "PLAN",
+      "OUTPUT"
+    ],
+    [
+      "MONITOR",
+      "REPORT",
+      "OUTPUT"
+    ]
+  ],
+  "parameters": {
+    "MANAGEMENT_APPROVAL_THRESHOLD": 500000,
+    "TECHNICAL_ISSUE": true
+  },
+  "rules": [
+    {
+      "name": "Approvazione in base al valore PO",
+      "target": "APPROVE",
+      "purpose": "REQUIREMENT",
+      "true": "REQUIRED",
+      "false": "OPTIONAL",
+      "recipe": {
+        "op": "GTE",
+        "left": {
+          "kind": "property",
+          "element": "PO",
+          "code": "COST"
+        },
+        "right": {
+          "kind": "parameter",
+          "code": "MANAGEMENT_APPROVAL_THRESHOLD"
+        }
+      }
+    },
+    {
+      "name": "Technical Alignment condizionale",
+      "target": "TA",
+      "purpose": "APPLICABILITY",
+      "true": "APPLICABLE",
+      "false": "NOT_APPLICABLE",
+      "recipe": {
+        "op": "EQ",
+        "left": {
+          "kind": "parameter",
+          "code": "TECHNICAL_ISSUE"
+        },
+        "right": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "name": "Supplier A richiesto",
+      "target": "A_QUOTE",
+      "purpose": "REQUIREMENT",
+      "true": "REQUIRED",
+      "false": "OPTIONAL",
+      "recipe": {
+        "op": "EQ",
+        "left": {
+          "kind": "literal",
+          "value": true
+        },
+        "right": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "name": "Supplier B richiesto",
+      "target": "B_QUOTE",
+      "purpose": "REQUIREMENT",
+      "true": "REQUIRED",
+      "false": "OPTIONAL",
+      "recipe": {
+        "op": "EQ",
+        "left": {
+          "kind": "literal",
+          "value": true
+        },
+        "right": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "name": "RFQ prima di Supplier A",
+      "target": "A_QUOTE",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "SEND"
+      }
+    },
+    {
+      "name": "RFQ prima di Supplier B",
+      "target": "B_QUOTE",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "SEND"
+      }
+    },
+    {
+      "name": "Analisi prima di alignment",
+      "target": "TA",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "ANALYZE"
+      }
+    },
+    {
+      "name": "Analisi prima di negoziazione",
+      "target": "NEGOTIATE",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "ANALYZE"
+      }
+    },
+    {
+      "name": "Alignment prima di specifica",
+      "target": "SPEC_REV",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "TA"
+      }
+    },
+    {
+      "name": "Specifica prima di revisione offerta",
+      "target": "QUOTE_REV",
+      "purpose": "ENABLEMENT",
+      "true": "ENABLED",
+      "false": "BLOCKED",
+      "recipe": {
+        "kind": "completed",
+        "element": "SPEC_REV"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "key": "rda",
+      "element": "RDA_PREP",
+      "recorded_at": "2026-09-01T10:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-01T08:00:00+00:00",
+        "ACTUAL_END": "2026-09-01T10:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "send",
+      "element": "SEND",
+      "recorded_at": "2026-09-01T12:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-01T11:00:00+00:00",
+        "ACTUAL_END": "2026-09-01T12:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "a1",
+      "element": "A_QUOTE",
+      "recorded_at": "2026-09-02T15:00:00+00:00",
+      "values": {
+        "ENABLED_AT": "2026-09-01T12:00:00+00:00",
+        "ACTUAL_START": "2026-09-02T09:00:00+00:00",
+        "ACTUAL_END": "2026-09-02T15:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "b1",
+      "element": "B_QUOTE",
+      "recorded_at": "2026-09-02T15:00:00+00:00",
+      "values": {
+        "ENABLED_AT": "2026-09-01T12:00:00+00:00",
+        "ACTUAL_START": "2026-09-02T10:00:00+00:00",
+        "ACTUAL_END": "2026-09-02T15:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "analysis1",
+      "element": "ANALYZE",
+      "recorded_at": "2026-09-03T12:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-03T09:00:00+00:00",
+        "ACTUAL_END": "2026-09-03T12:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "ta",
+      "element": "TA",
+      "recorded_at": "2026-09-04T13:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-04T09:00:00+00:00",
+        "ACTUAL_END": "2026-09-04T13:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "spec",
+      "element": "SPEC_REV",
+      "recorded_at": "2026-09-04T16:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-04T13:00:00+00:00",
+        "ACTUAL_END": "2026-09-04T16:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "a2",
+      "element": "A_QUOTE",
+      "recorded_at": "2026-09-07T13:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-07T09:00:00+00:00",
+        "ACTUAL_END": "2026-09-07T13:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "analysis2",
+      "element": "ANALYZE",
+      "recorded_at": "2026-09-07T17:00:00+00:00",
+      "values": {
+        "ACTUAL_START": "2026-09-07T14:00:00+00:00",
+        "ACTUAL_END": "2026-09-07T17:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "po",
+      "element": "PO",
+      "recorded_at": "2026-09-08T11:00:00+00:00",
+      "values": {
+        "COST": 620000,
+        "STATUS": "ISSUED",
+        "AVAILABLE_AT": "2026-09-08T11:00:00+00:00"
+      }
+    },
+    {
+      "key": "approve",
+      "element": "APPROVE",
+      "recorded_at": "2026-09-09T12:00:00+00:00",
+      "values": {
+        "ENABLED_AT": "2026-09-08T11:00:00+00:00",
+        "ACTUAL_START": "2026-09-09T10:00:00+00:00",
+        "ACTUAL_END": "2026-09-09T12:00:00+00:00",
+        "STATUS": "COMPLETED"
+      }
+    },
+    {
+      "key": "monitor",
+      "element": "MONITOR",
+      "recorded_at": "2026-09-10T09:00:00+00:00",
+      "values": {
+        "STATUS": "PLANNED"
+      }
+    }
+  ],
+  "corrections": [
+    [
+      "a2",
+      "a1"
+    ]
+  ],
+  "runtime_relations": [
+    [
+      "analysis1",
+      "po",
+      "INPUT"
+    ]
+  ]
+}

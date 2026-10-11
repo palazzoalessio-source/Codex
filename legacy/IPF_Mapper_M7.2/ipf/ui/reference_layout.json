@@ -1,0 +1,433 @@
+{
+  "description": "Presentation-only placement matching the supplied RFQ reference. Applies only to untouched baseline coordinates; no semantic data or policies.",
+  "nodes": {
+    "RDA_PREP": {
+      "baseline": [
+        210,
+        120
+      ],
+      "rect": [
+        185,
+        15,
+        135,
+        50
+      ]
+    },
+    "TA": {
+      "baseline": [
+        930,
+        120
+      ],
+      "rect": [
+        668,
+        15,
+        145,
+        50
+      ]
+    },
+    "SPEC_REV": {
+      "baseline": [
+        1170,
+        120
+      ],
+      "rect": [
+        848,
+        15,
+        144,
+        50
+      ]
+    },
+    "SEND": {
+      "baseline": [
+        450,
+        260
+      ],
+      "rect": [
+        272,
+        107,
+        86,
+        49
+      ]
+    },
+    "RECEIVE": {
+      "baseline": [
+        690,
+        260
+      ],
+      "rect": [
+        505,
+        107,
+        118,
+        49
+      ]
+    },
+    "ANALYZE": {
+      "baseline": [
+        930,
+        260
+      ],
+      "rect": [
+        659,
+        107,
+        114,
+        49
+      ]
+    },
+    "NEGOTIATE": {
+      "baseline": [
+        1410,
+        260
+      ],
+      "rect": [
+        898,
+        107,
+        94,
+        49
+      ]
+    },
+    "PO_ISSUE": {
+      "baseline": [
+        1650,
+        260
+      ],
+      "rect": [
+        1039,
+        107,
+        90,
+        49
+      ]
+    },
+    "A_QUOTE": {
+      "baseline": [
+        450,
+        400
+      ],
+      "rect": [
+        252,
+        195,
+        140,
+        49
+      ]
+    },
+    "A_SEND": {
+      "baseline": [
+        690,
+        400
+      ],
+      "rect": [
+        430,
+        195,
+        131,
+        49
+      ]
+    },
+    "B_QUOTE": {
+      "baseline": [
+        450,
+        490
+      ],
+      "rect": [
+        252,
+        266,
+        140,
+        49
+      ]
+    },
+    "B_SEND": {
+      "baseline": [
+        690,
+        490
+      ],
+      "rect": [
+        430,
+        266,
+        131,
+        49
+      ]
+    },
+    "QUOTE_REV": {
+      "baseline": [
+        1170,
+        400
+      ],
+      "rect": [
+        840,
+        215,
+        134,
+        49
+      ]
+    },
+    "APPROVE": {
+      "baseline": [
+        1650,
+        590
+      ],
+      "rect": [
+        1080,
+        330,
+        140,
+        42
+      ]
+    },
+    "DELIVERY": {
+      "baseline": [
+        1650,
+        730
+      ],
+      "rect": [
+        1107,
+        390,
+        135,
+        42
+      ]
+    },
+    "MONITOR": {
+      "baseline": [
+        1650,
+        870
+      ],
+      "rect": [
+        1107,
+        463,
+        128,
+        43
+      ]
+    },
+    "RDA": {
+      "baseline": [
+        210,
+        215
+      ],
+      "rect": [
+        416,
+        19,
+        37,
+        44
+      ]
+    },
+    "RFQ": {
+      "baseline": [
+        210,
+        330
+      ],
+      "rect": [
+        406,
+        107,
+        37,
+        45
+      ]
+    },
+    "OFFER_A": {
+      "baseline": [
+        930,
+        400
+      ],
+      "rect": [
+        623,
+        199,
+        80,
+        44
+      ]
+    },
+    "OFFER_B": {
+      "baseline": [
+        930,
+        490
+      ],
+      "rect": [
+        623,
+        270,
+        80,
+        43
+      ]
+    },
+    "SPEC": {
+      "baseline": [
+        1170,
+        215
+      ],
+      "rect": [
+        1002,
+        22,
+        91,
+        43
+      ]
+    },
+    "OFFER_REV": {
+      "baseline": [
+        1410,
+        400
+      ],
+      "rect": [
+        987,
+        216,
+        113,
+        45
+      ]
+    },
+    "PO": {
+      "baseline": [
+        1410,
+        590
+      ],
+      "rect": [
+        1177,
+        107,
+        39,
+        45
+      ]
+    },
+    "PLAN": {
+      "baseline": [
+        1410,
+        730
+      ],
+      "rect": [
+        922,
+        390,
+        132,
+        42
+      ]
+    },
+    "REPORT": {
+      "baseline": [
+        1410,
+        870
+      ],
+      "rect": [
+        922,
+        463,
+        132,
+        43
+      ]
+    },
+    "GA": {
+      "baseline": [
+        210,
+        400
+      ],
+      "rect": [
+        242,
+        187,
+        0,
+        0
+      ]
+    },
+    "GB": {
+      "baseline": [
+        210,
+        490
+      ],
+      "rect": [
+        242,
+        258,
+        0,
+        0
+      ]
+    }
+  },
+  "lanes": {
+    "ENG": [
+      0,
+      80
+    ],
+    "PROC": [
+      84,
+      92
+    ],
+    "SUP": [
+      180,
+      141
+    ],
+    "MGT": [
+      322,
+      62
+    ],
+    "LOG": [
+      385,
+      62
+    ],
+    "EXP": [
+      449,
+      68
+    ]
+  },
+  "baseline_functions": {
+    "ENG": 110,
+    "PROC": 250,
+    "SUP": 390,
+    "MGT": 570,
+    "LOG": 710,
+    "EXP": 850
+  },
+  "badges": {
+    "RDA_PREP|SEND": [
+      359,
+      72
+    ],
+    "SEND|A_QUOTE": [
+      447,
+      162
+    ],
+    "SEND|B_QUOTE": [
+      235,
+      163
+    ],
+    "A_QUOTE|A_SEND": [
+      708,
+      168
+    ],
+    "B_QUOTE|B_SEND": [
+      708,
+      285
+    ],
+    "A_SEND|RECEIVE": [
+      520,
+      75
+    ],
+    "B_SEND|RECEIVE": [
+      602,
+      75
+    ],
+    "RECEIVE|ANALYZE": [
+      569,
+      164
+    ],
+    "ANALYZE|TA": [
+      745,
+      74
+    ],
+    "TA|SPEC_REV": [
+      815,
+      74
+    ],
+    "SPEC_REV|QUOTE_REV": [
+      820,
+      164
+    ],
+    "QUOTE_REV|ANALYZE": [
+      734,
+      253
+    ],
+    "ANALYZE|NEGOTIATE": [
+      887,
+      164
+    ],
+    "NEGOTIATE|PO_ISSUE": [
+      1030,
+      164
+    ],
+    "PO_ISSUE|APPROVE": [
+      1170,
+      260
+    ],
+    "APPROVE|DELIVERY": [
+      1000,
+      350
+    ],
+    "DELIVERY|MONITOR": [
+      1110,
+      434
+    ]
+  }
+}

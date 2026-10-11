@@ -1,0 +1,87 @@
+test_01_valid_and_invalid_signature (test_milestone1.CoreScenario.test_01_valid_and_invalid_signature) ... ok
+test_02_copy_on_write_and_clone (test_milestone1.CoreScenario.test_02_copy_on_write_and_clone) ... ok
+test_03_removal_impact (test_milestone1.CoreScenario.test_03_removal_impact) ... ok
+test_04_published_revision_is_immutable (test_milestone1.CoreScenario.test_04_published_revision_is_immutable) ... ok
+test_05_shared_runtime_reality (test_milestone1.CoreScenario.test_05_shared_runtime_reality) ... ok
+test_06_contains_cycle_rejected (test_milestone1.CoreScenario.test_06_contains_cycle_rejected) ... ok
+test_07_transaction_rollback (test_milestone1.CoreScenario.test_07_transaction_rollback) ... ok
+test_08_clone_does_not_duplicate_definitions (test_milestone1.CoreScenario.test_08_clone_does_not_duplicate_definitions) ... ok
+test_derivation (test_milestone2.M2.test_derivation) ... ok
+test_expression_roundtrip (test_milestone2.M2.test_expression_roundtrip) ... ok
+test_implication_prerequisite (test_milestone2.M2.test_implication_prerequisite) ... ok
+test_not_applicable (test_milestone2.M2.test_not_applicable) ... ok
+test_rule_persistence_roundtrip (test_milestone2.M2.test_rule_persistence_roundtrip) ... ok
+test_rule_statuses (test_milestone2.M2.test_rule_statuses) ... ok
+test_temporal_roundtrip (test_milestone2.M2.test_temporal_roundtrip) ... ok
+test_ternary_logic (test_milestone2.M2.test_ternary_logic) ... ok
+test_time_constraint (test_milestone2.M2.test_time_constraint) ... ok
+test_validator_arity_and_type (test_milestone2.M2.test_validator_arity_and_type) ... ok
+test_active_is_projection_not_inference (test_milestone3.M3.test_active_is_projection_not_inference) ... ok
+test_any_all_bind_each_instance_explicitly (test_milestone3.M3.test_any_all_bind_each_instance_explicitly) ... ok
+test_binding_unique_instance_resolves_scalar_property (test_milestone3.M3.test_binding_unique_instance_resolves_scalar_property) ... ok
+test_filter_propagates_unknown_membership (test_milestone3.M3.test_filter_propagates_unknown_membership) ... ok
+test_graph_queries_are_generic_and_not_persisted (test_milestone3.M3.test_graph_queries_are_generic_and_not_persisted) ... ok
+test_multiple_instances_do_not_get_magic_current_selection (test_milestone3.M3.test_multiple_instances_do_not_get_magic_current_selection) ... ok
+test_potential_graph_is_definition_projection (test_milestone3.M3.test_potential_graph_is_definition_projection) ... ok
+test_realized_graph_uses_instances_and_observed_relations (test_milestone3.M3.test_realized_graph_uses_instances_and_observed_relations) ... ok
+test_adhoc (test_milestone4.M4.test_adhoc) ... ok
+test_blocked (test_milestone4.M4.test_blocked) ... ok
+test_configurable_business_threshold_no_code_change (test_milestone4.M4.test_configurable_business_threshold_no_code_change) ... ok
+test_conflict (test_milestone4.M4.test_conflict) ... ok
+test_defaults (test_milestone4.M4.test_defaults) ... ok
+test_multiple (test_milestone4.M4.test_multiple) ... ok
+test_not_applicable_but_realized (test_milestone4.M4.test_not_applicable_but_realized) ... ok
+test_unknown_conservative (test_milestone4.M4.test_unknown_conservative) ... ok
+test_actual_overlap (test_milestone5.M5.test_actual_overlap) ... ok
+test_actual_parallelism_from_intervals (test_milestone5.M5.test_actual_parallelism_from_intervals) ... ok
+test_and_branch_requires_all_required (test_milestone5.M5.test_and_branch_requires_all_required) ... ok
+test_business_agnostic (test_milestone5.M5.test_business_agnostic) ... ok
+test_conditional_branch_from_applicability (test_milestone5.M5.test_conditional_branch_from_applicability) ... ok
+test_cycle_is_topological_only (test_milestone5.M5.test_cycle_is_topological_only) ... ok
+test_direct_and_transitive_dependency (test_milestone5.M5.test_direct_and_transitive_dependency) ... ok
+test_geometry_free_fanout_does_not_claim_xor_or_or (test_milestone5.M5.test_geometry_free_fanout_does_not_claim_xor_or_or) ... ok
+test_multiple_instances_are_iteration_not_rework_without_evidence (test_milestone5.M5.test_multiple_instances_are_iteration_not_rework_without_evidence) ... ok
+test_observed_sequence_is_not_dependency (test_milestone5.M5.test_observed_sequence_is_not_dependency) ... ok
+test_potential_parallel_requires_scope_enablement_and_no_dependency (test_milestone5.M5.test_potential_parallel_requires_scope_enablement_and_no_dependency) ... ok
+test_rework_requires_correction_evidence (test_milestone5.M5.test_rework_requires_correction_evidence) ... ok
+test_waiting_is_observed_not_automatically_waste (test_milestone5.M5.test_waiting_is_observed_not_automatically_waste) ... ok
+test_end_to_end_model_parameter_publish_execution (test_milestone6.Milestone6ControllerTests.test_end_to_end_model_parameter_publish_execution) ... ok
+test_policy_change_is_data_in_cloned_revision (test_milestone6.Milestone6ControllerTests.test_policy_change_is_data_in_cloned_revision) ... ok
+test_criticality_native_property (test_milestone7.M7.test_criticality_native_property) ... ok
+test_information_flow_action_endpoints (test_milestone7.M7.test_information_flow_action_endpoints) ... ok
+test_library (test_milestone7.M7.test_library) ... ok
+test_visual_schema_and_layout (test_milestone7.M7.test_visual_schema_and_layout) ... ok
+test_canvas_receives_controller_not_main_window (test_milestone7.M7CanvasWiringRegression.test_canvas_receives_controller_not_main_window)
+Regression for AttributeError: MainWindow has no visual_entities. ... ok
+test_canvas_refresh_data_contract (test_milestone7.M7CanvasWiringRegression.test_canvas_refresh_data_contract)
+Every controller query used by IPFCanvas.refresh works on a real revision. ... ok
+test_collapse_nested_projection_persisted (test_milestone71.DemoCase.test_collapse_nested_projection_persisted) ... ok
+test_cross_workspace_link_and_instance_rejected (test_milestone71.DemoCase.test_cross_workspace_link_and_instance_rejected) ... ok
+test_custom_means_default_generic (test_milestone71.DemoCase.test_custom_means_default_generic) ... ok
+test_flow_grammar_roundtrip_and_atomic_failure (test_milestone71.DemoCase.test_flow_grammar_roundtrip_and_atomic_failure) ... ok
+test_inspector_properties_performer_and_copy_isolation (test_milestone71.DemoCase.test_inspector_properties_performer_and_copy_isolation) ... ok
+test_observations_history_latest_and_validation (test_milestone71.DemoCase.test_observations_history_latest_and_validation) ... ok
+test_policy_500k_to_750k_preserves_execution_snapshot (test_milestone71.DemoCase.test_policy_500k_to_750k_preserves_execution_snapshot) ... ok
+test_reset_demo_does_not_touch_user_db (test_milestone71.DemoCase.test_reset_demo_does_not_touch_user_db) ... ok
+test_runtime_analysis_ground_truth (test_milestone71.DemoCase.test_runtime_analysis_ground_truth) ... ok
+test_seed_idempotence_and_reopen (test_milestone71.DemoCase.test_seed_idempotence_and_reopen) ... ok
+test_technical_alignment_conditional (test_milestone71.DemoCase.test_technical_alignment_conditional) ... ok
+test_unknown_and_conflict_are_preserved (test_milestone71.DemoCase.test_unknown_and_conflict_are_preserved) ... ok
+test_gui_canvas_fit_reload_resize_and_collapse (test_milestone71_gui.GuiWorkflow.test_gui_canvas_fit_reload_resize_and_collapse) ... ok
+test_gui_critical_marker_and_means_library (test_milestone71_gui.GuiWorkflow.test_gui_critical_marker_and_means_library) ... ok
+test_gui_flow_and_connection (test_milestone71_gui.GuiWorkflow.test_gui_flow_and_connection) ... ok
+test_gui_inspector_edit_persist_refresh (test_milestone71_gui.GuiWorkflow.test_gui_inspector_edit_persist_refresh) ... ok
+test_gui_pages_policy_analysis_and_execution (test_milestone71_gui.GuiWorkflow.test_gui_pages_policy_analysis_and_execution) ... ok
+test_gui_parallel_branch_does_not_cross_other_supplier (test_milestone71_gui.GuiWorkflow.test_gui_parallel_branch_does_not_cross_other_supplier) ... ok
+test_gui_participant_flow_and_performer_lane (test_milestone71_gui.GuiWorkflow.test_gui_participant_flow_and_performer_lane) ... ok
+test_gui_rule_form_roundtrip (test_milestone71_gui.GuiWorkflow.test_gui_rule_form_roundtrip) ... ok
+test_gui_sidebar_inspector_toggle (test_milestone71_gui.GuiWorkflow.test_gui_sidebar_inspector_toggle) ... ok
+test_gui_type_specific_forms_save (test_milestone71_gui.GuiWorkflow.test_gui_type_specific_forms_save) ... ok
+test_inspector_and_means_tiles_fit_reference_panels (test_milestone72_gui.VisualControls.test_inspector_and_means_tiles_fit_reference_panels) ... ok
+test_reference_projection_does_not_modify_model_layout (test_milestone72_gui.VisualControls.test_reference_projection_does_not_modify_model_layout) ... ok
+test_zoom_search_and_minimap_navigation (test_milestone72_gui.VisualControls.test_zoom_search_and_minimap_navigation) ... ok
+
+----------------------------------------------------------------------
+Ran 80 tests in 16.615s
+
+OK

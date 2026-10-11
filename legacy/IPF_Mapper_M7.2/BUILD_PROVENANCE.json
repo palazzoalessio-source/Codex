@@ -1,0 +1,23 @@
+{
+  "base_archive": "ipf_mapper_milestone7_visual_workspace_hotfix.zip",
+  "base_sha256": "3f56bedfcec73e49ba4259a2433c4e30e5c76345a996b87d57113a2d49e17e0e",
+  "unchanged_engine_domain_files": [
+    "ipf/domain/models.py",
+    "ipf/domain/exceptions.py",
+    "ipf/domain/rule_validation.py",
+    "ipf/domain/expression_validation.py",
+    "ipf/domain/process_analysis.py",
+    "ipf/domain/validation.py",
+    "ipf/domain/expressions.py",
+    "ipf/domain/__init__.py",
+    "ipf/domain/graph.py",
+    "ipf/domain/active.py",
+    "ipf/domain/rules.py",
+    "ipf/engines/expression_engine.py",
+    "ipf/engines/graph_engine.py",
+    "ipf/engines/analysis_engine.py",
+    "ipf/engines/binding_engine.py",
+    "ipf/engines/__init__.py",
+    "ipf/engines/rule_engine.py"
+  ]
+}
