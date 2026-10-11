@@ -20,5 +20,9 @@ export default defineConfig({
       },
     },
   },
-  server: { proxy: { "/api": "http://127.0.0.1:3001" } },
+  server: {
+    port: Number(process.env.IPF_WEB_PORT ?? 5173),
+    strictPort: true,
+    proxy: { "/api": `http://127.0.0.1:${process.env.IPF_PORT ?? 3001}` },
+  },
 });

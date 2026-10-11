@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import { z } from "zod";
 import { openRepository, ConflictError } from "./database";
 
+const apiPort = Number(process.env.IPF_PORT ?? 3001);
+const webPort = Number(process.env.IPF_WEB_PORT ?? 5173);
 const repo = await openRepository();
 const app = express();
 app.disable("x-powered-by");
@@ -20,7 +22,7 @@ app.use((req, res, next) => {
       const url = new URL(origin);
       if (
         !["localhost", "127.0.0.1"].includes(url.hostname) ||
-        !["3001", "5173"].includes(url.port)
+        ![String(apiPort), String(webPort)].includes(url.port)
       ) {
         res.status(403).json({ error: "Origine non consentita." });
         return;
@@ -119,14 +121,15 @@ app.use(
     });
   },
 );
-const server = app.listen(
-  Number(process.env.IPF_PORT ?? 3001),
-  "127.0.0.1",
-  () =>
-    console.log(
-      "IPF Mapper API pronta sulla porta " + (process.env.IPF_PORT ?? 3001),
-    ),
-);
+const server = app.listen(apiPort, "127.0.0.1", (error?: Error) => {
+  if (error) {
+    console.error(`API non avviata sulla porta ${apiPort}: ${error.message}`);
+    repo.close();
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`IPF Mapper API pronta sulla porta ${apiPort}`);
+});
 for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.on(signal, () =>
     server.close(() => {

@@ -7,9 +7,9 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev": "concurrently -k \"tsx server/index.ts\" \"vite --host 127.0.0.1\"",
+    "dev": "node scripts/dev.mjs",
     "build": "tsc --noEmit && vite build",
-    "start": "tsx server/index.ts",
+    "start": "node scripts/dev.mjs --production",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

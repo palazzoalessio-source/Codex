@@ -5,12 +5,12 @@ Prima versione della migrazione architetturale da Python/PySide M7.2. Modellazio
 Richiede **Node 24+**. Le versioni delle dipendenze sono congelate in `package-lock.json`.
 
 ```bash
-cd /workspace/Codex
-npm ci --cache /workspace/.npm-cache
+cd <cartella-del-progetto>
+npm ci
 npm run dev
 ```
 
-Frontend Vite: porta 5173; API locale: porta 3001. `npm run build` verifica TypeScript strict e genera la build; `npm start` serve API e build sulla porta 3001. I servizi ascoltano esclusivamente sul loopback. Non è un deployment pubblico o multiutente.
+Frontend Vite: porta 5173; API locale: porta 3001. Se occupate, l’avvio sceglie porte libere e stampa l’indirizzo esatto da aprire. Il proxy e le origini consentite seguono le porte effettive. `npm run build` verifica TypeScript strict e genera la build; `npm start` serve API e build sulla porta 3001. I servizi ascoltano esclusivamente sul loopback. Non è un deployment pubblico o multiutente.
 
 ## Database e dati personali
 
@@ -57,3 +57,14 @@ Vedi [assessment](docs/ASSESSMENT.md), [stato della migrazione](docs/MIGRATION_R
 Apri **Progetti → Nuovo progetto**, inserisci il nome del progetto e del processo e scegli **Crea progetto vuoto**. Aggiungi funzioni, attività e informazioni dalla libreria. **Regole** apre la gestione delle regole di stato, con confronti o attività prerequisito e stati configurabili. **Mezzi e icone** apre la scelta visuale del mezzo, disponibile anche nelle proprietà. **Libreria gruppi** salva gruppi riutilizzabili con membri e relazioni interne.
 
 **Seleziona** modifica gli elementi o seleziona una regione; **Mano** sposta esclusivamente la vista. **100%** ripristina una scala leggibile; **Adatta processo** mostra la panoramica completa. Le categorie della navigazione sono richiudibili e la ricerca apre solo i risultati corrispondenti.
+
+### Porta occupata o pagina che non si apre
+Avvia una sola volta con `npm run dev`, lascia il terminale aperto e apri l’indirizzo stampato dopo **IPF Mapper pronto**. Una porta occupata viene gestita automaticamente; non occorre terminare altre applicazioni. Per preferire altre porte su PowerShell:
+
+```powershell
+$env:IPF_PORT = "3010"
+$env:IPF_WEB_PORT = "5180"
+npm run dev
+```
+
+Per la build completa: `npm run build`, poi `npm start`. Anche questo avvio sceglie una porta libera.
