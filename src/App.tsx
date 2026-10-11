@@ -41,10 +41,15 @@ import {
   type Entity,
   type ProcessDocument,
 } from "./domain/model";
+import { presentationLayouts } from "./domain/presentation";
 import { applyCommand } from "./domain/commands";
 import { analyze } from "./domain/analysis";
 import { validate } from "./domain/validation";
 import { useEditor } from "./state/useEditor";
+import { GroupLibrary } from "./components/GroupLibrary";
+import { MeansIcon, meansIcons } from "./components/MeansIcon";
+import { RuleLibrary } from "./components/RuleLibrary";
+import { ProjectLibrary } from "./components/ProjectLibrary";
 import { EditorCanvas } from "./components/EditorCanvas";
 import { Inspector } from "./components/Inspector";
 import { AnalysisPanel } from "./components/AnalysisPanel";
@@ -94,7 +99,7 @@ function Workspace({
     [selectedIds, setSelectedIds] = useState<string[]>([]),
     [analysis, setAnalysis] = useState(false),
     [grid, setGrid] = useState(true),
-    [pan, setPan] = useState(true),
+    [pan, setPan] = useState(false),
     [space, setSpace] = useState(false),
     [search, setSearch] = useState(""),
     [focusId, setFocusId] = useState<string | null>(null),
@@ -105,6 +110,10 @@ function Workspace({
     } | null>(null),
     [connection, setConnection] = useState<Connection | null>(null),
     [clone, setClone] = useState(false),
+    [projectLibrary, setProjectLibrary] = useState(false),
+    [ruleLibrary, setRuleLibrary] = useState(false),
+    [groupLibrary, setGroupLibrary] = useState(false),
+    [iconLibrary, setIconLibrary] = useState(false),
     [executionData, setExecutionData] = useState<unknown>(null),
     [showExecutions, setShowExecutions] = useState(false);
   const onSelection = useCallback(
@@ -119,6 +128,10 @@ function Workspace({
   );
   const clipboard = useRef<ProcessDocument | null>(null),
     importInput = useRef<HTMLInputElement>(null);
+  const displayLayouts = useMemo(
+    () => (doc ? presentationLayouts(doc) : new Map()),
+    [doc?.entities, doc?.relations],
+  );
   const selected = doc?.entities.find((e) => e.uid === selectedUid) ?? null,
     editable = doc?.revision.status === "DRAFT",
     metrics = useMemo(
@@ -126,7 +139,11 @@ function Workspace({
       [doc?.entities, doc?.relations, doc?.rules, catalog],
     );
   useEffect(() => {
-    const first = revisions.find((r) => r.status === "DRAFT") ?? revisions[0];
+    const remembered = Number(localStorage.getItem("ipf-last-revision"));
+    const first =
+      revisions.find((r) => r.id === remembered) ??
+      revisions.find((r) => r.status === "DRAFT") ??
+      revisions[0];
     if (first && !doc)
       void api
         .read(first.id)
@@ -151,6 +168,7 @@ function Workspace({
     }
     try {
       editor.open(await api.read(id));
+      localStorage.setItem("ipf-last-revision", String(id));
       setSelectedUid(null);
       setSelectedIds([]);
     } catch (e) {
@@ -425,7 +443,11 @@ function Workspace({
               {
                 type: "move",
                 positions: [
-                  { id: entity.id, x: entity.layout.x, y: lane.layout.y + 10 },
+                  {
+                    id: entity.id,
+                    x: entity.layout.x,
+                    y: displayLayouts.get(lane.id)!.y + 10,
+                  },
                 ],
               },
               catalog,
@@ -468,6 +490,18 @@ function Workspace({
       editor.setError(String(e));
     }
   };
+  if (!doc && revisions.length === 0)
+    return (
+      <ProjectLibrary
+        onClose={() => {}}
+        onOpen={openRevision}
+        onCreate={async (next) => {
+          await refresh();
+          editor.open(next);
+          localStorage.setItem("ipf-last-revision", String(next.revision.id));
+        }}
+      />
+    );
   if (!doc || !metrics)
     return (
       <div className="loading">{editor.error || "Caricamento processo…"}</div>
@@ -491,6 +525,24 @@ function Workspace({
           Modellazione & analisi
         </div>
         <div className="header-actions">
+          <button
+            className="secondary-button"
+            onClick={async () => {
+              if (!editor.dirty || (await editor.save()))
+                setProjectLibrary(true);
+            }}
+          >
+            <Layers size={18} />
+            Progetti
+          </button>
+          <button
+            className="secondary-button"
+            onClick={async () => {
+              if (!editor.dirty || (await editor.save())) setRuleLibrary(true);
+            }}
+          >
+            Regole <span>{doc.rules.length}</span>
+          </button>
           <button className="secondary-button" onClick={() => setClone(true)}>
             <GitCompareArrows size={16} />
             Copia revisione
@@ -505,6 +557,44 @@ function Workspace({
           </button>
         </div>
       </header>
+      {groupLibrary && (
+        <GroupLibrary
+          doc={doc}
+          onClose={() => setGroupLibrary(false)}
+          onInsert={replace}
+        />
+      )}
+      {ruleLibrary && (
+        <RuleLibrary
+          doc={doc}
+          catalog={catalog}
+          onClose={() => setRuleLibrary(false)}
+          onSaved={editor.open}
+        />
+      )}
+      {projectLibrary && (
+        <ProjectLibrary
+          onClose={() => setProjectLibrary(false)}
+          onOpen={async (id) => {
+            await openRevision(id);
+            setProjectLibrary(false);
+            setSearch("");
+            setSelectedUid(null);
+            setFocusId(null);
+          }}
+          onCreate={async (next) => {
+            await refresh();
+            editor.open(next);
+            localStorage.setItem("ipf-last-revision", String(next.revision.id));
+            setProjectLibrary(false);
+            setSearch("");
+            setSelectedUid(null);
+            setSelectedIds([]);
+            setFocusId(null);
+            setAnalysis(false);
+          }}
+        />
+      )}
       <div className="workspace-body">
         {sidebar && (
           <aside className="sidebar">
@@ -515,11 +605,13 @@ function Workspace({
                 value={doc.revision.id}
                 onChange={(e) => void openRevision(Number(e.target.value))}
               >
-                {revisions.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} · {r.code} · {r.purpose}
-                  </option>
-                ))}
+                {revisions
+                  .filter((r) => r.modelId === doc.revision.modelId)
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} · {r.code} · {r.purpose}
+                    </option>
+                  ))}
               </select>
               <div className="revision-info">
                 <span className={`purpose purpose-${doc.revision.purpose}`}>
@@ -533,6 +625,47 @@ function Workspace({
                 <small>LIBRERIA ELEMENTI</small>
                 <span>Trascina sul canvas</span>
               </div>
+              <div className="library-switches">
+                <button
+                  onClick={() => setIconLibrary(!iconLibrary)}
+                  aria-pressed={iconLibrary}
+                >
+                  Mezzi e icone
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!editor.dirty || (await editor.save()))
+                      setGroupLibrary(true);
+                  }}
+                >
+                  Libreria gruppi
+                </button>
+              </div>
+              {iconLibrary && (
+                <div className="means-icon-picker">
+                  {meansIcons.map(([kind, label]) => (
+                    <button
+                      key={kind}
+                      disabled={!editable}
+                      onClick={() => {
+                        const e = newEntity(
+                          "MEANS",
+                          label,
+                          (260 - doc.viewport.x) / doc.viewport.zoom,
+                          (120 - doc.viewport.y) / doc.viewport.zoom,
+                        );
+                        e.properties.MEANS_ICON = kind;
+                        dispatch({ type: "upsert", entity: e });
+                        select(e);
+                        setFocusId(e.id);
+                      }}
+                    >
+                      <MeansIcon kind={kind} />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="library">
                 {catalog.types
                   .filter((t) => t.code !== "INFORMATION_FLOW")
@@ -559,16 +692,23 @@ function Workspace({
                                   isType(e.type, "PARTICIPANT", catalog),
                                 )
                                 .map(
-                                  (e) => e.layout.y + (e.layout.height ?? 140),
+                                  (e) =>
+                                    displayLayouts.get(e.id)!.y +
+                                    (displayLayouts.get(e.id)!.height ?? 140),
                                 ),
                             ) + 30;
                         else {
-                          const obstacles = doc.entities.filter(
-                            (e) =>
-                              e.type !== "INFORMATION_FLOW" &&
-                              e.type !== "PROCESS_GROUP" &&
-                              !isType(e.type, "PARTICIPANT", catalog),
-                          );
+                          const obstacles = doc.entities
+                            .map((e) => ({
+                              ...e,
+                              layout: displayLayouts.get(e.id)!,
+                            }))
+                            .filter(
+                              (e) =>
+                                e.type !== "INFORMATION_FLOW" &&
+                                e.type !== "PROCESS_GROUP" &&
+                                !isType(e.type, "PARTICIPANT", catalog),
+                            );
                           while (
                             obstacles.some(
                               (e) =>
@@ -607,28 +747,56 @@ function Workspace({
                 />
               </div>
               <div className="element-list">
-                {doc.entities
-                  .filter(
-                    (e) =>
-                      !search ||
-                      e.name
-                        .toLocaleLowerCase()
-                        .includes(search.toLocaleLowerCase()),
-                  )
-                  .map((e) => (
-                    <button
-                      key={e.id}
-                      className={selected?.id === e.id ? "active" : ""}
-                      onClick={() => {
-                        select(e);
-                        setFocusId(e.id);
-                      }}
+                {[
+                  [
+                    "Funzioni e partecipanti",
+                    (e: Entity) => isType(e.type, "PARTICIPANT", catalog),
+                  ],
+                  ["Gruppi", (e: Entity) => e.type === "PROCESS_GROUP"],
+                  [
+                    "Attività e decisioni",
+                    (e: Entity) => isType(e.type, "ACTION", catalog),
+                  ],
+                  ["Informazioni", (e: Entity) => e.type === "INFORMATION"],
+                  ["Mezzi", (e: Entity) => e.type === "MEANS"],
+                  ["Flussi", (e: Entity) => e.type === "INFORMATION_FLOW"],
+                ].map(([label, predicate]) => {
+                  const items = doc.entities
+                    .filter(predicate as (e: Entity) => boolean)
+                    .filter(
+                      (e) =>
+                        !search ||
+                        e.name
+                          .toLocaleLowerCase()
+                          .includes(search.toLocaleLowerCase()),
+                    );
+                  if (!items.length) return null;
+                  return (
+                    <details
+                      key={label as string}
+                      open={search ? true : undefined}
                     >
-                      <span className={`element-dot dot-${e.type}`} />
-                      {e.name}
-                      <ChevronRight size={13} />
-                    </button>
-                  ))}
+                      <summary>
+                        {label as string}
+                        <span>{items.length}</span>
+                      </summary>
+                      {items.map((e) => (
+                        <button
+                          key={e.id}
+                          className={selected?.id === e.id ? "active" : ""}
+                          onClick={() => {
+                            select(e);
+                            setFocusId(e.id);
+                          }}
+                        >
+                          <span className={`element-dot dot-${e.type}`} />
+                          {e.name}
+                          <ChevronRight size={16} />
+                        </button>
+                      ))}
+                    </details>
+                  );
+                })}
               </div>
             </div>
             <div className="sidebar-footer">
@@ -705,17 +873,21 @@ function Workspace({
             <div className="toolbar-group">
               <button
                 title="Seleziona"
+                aria-pressed={!pan}
                 className={!pan ? "active" : ""}
                 onClick={() => setPan(false)}
               >
-                <MousePointer2 size={17} />
+                <MousePointer2 size={20} />
+                <span>Seleziona</span>
               </button>
               <button
                 title="Pan"
+                aria-pressed={pan}
                 className={pan ? "active" : ""}
                 onClick={() => setPan(true)}
               >
-                <Hand size={17} />
+                <Hand size={20} />
+                <span>Mano</span>
               </button>
               <button
                 title="Griglia e snapping"

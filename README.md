@@ -24,7 +24,7 @@ IPF_DB_PATH=/percorso/assoluto/ipf_mapper.db npm run dev
 
 Il percorso deve esistere: un errore non crea un database vuoto. L'app scrive nel database scelto dopo averne completato un **backup SQLite coerente** in `.local/backups`, anche in presenza di WAL. Usa un percorso scrivibile; chiudi il client desktop durante la sessione di modifica. Il backup precede le migrazioni additive. Non aprire direttamente il file originale del pacchetto. Database precedenti alle tabelle M7.2 richieste vengono rifiutati senza migrazioni distruttive; aggiornarne prima una copia con il client legacy.
 
-Migrazioni: proprietà `VALUE_CLASSIFICATION` applicabile alle azioni (default in lettura `UNCLASSIFIED`); tipo `DECISION` derivato da ACTION; tabelle `web_revision_version` per conflitti e `web_entity_ui` per lock. Nessun DROP, reset o eliminazione di record storici. Snapshot PUBLISHED/ARCHIVED sono immutabili. Clone copia definizioni/proprietà, membership delle relazioni/regole, parametri e layout; le identità rimangono stabili. La cancellazione dall'editor rimuove membership dalla revisione e conserva i record originali. I salvataggi sono transazionali; conflitti HTTP 409 non sovrascrivono altri salvataggi. La modifica contemporanea tramite il client Python non aggiorna il contatore web: non usare i due editor contemporaneamente sullo stesso file.
+Migrazioni: proprietà `VALUE_CLASSIFICATION` applicabile alle azioni (default in lettura `UNCLASSIFIED`); tipo `DECISION` derivato da ACTION; tabelle `web_revision_version` per conflitti e `web_entity_ui` per lock e `web_group_template` per gruppi riutilizzabili. Nessun DROP, reset o eliminazione di record storici. Snapshot PUBLISHED/ARCHIVED sono immutabili. Clone copia definizioni/proprietà, membership delle relazioni/regole, parametri e layout; le identità rimangono stabili. La cancellazione dall'editor rimuove membership dalla revisione e conserva i record originali. I salvataggi sono transazionali; conflitti HTTP 409 non sovrascrivono altri salvataggi. La modifica contemporanea tramite il client Python non aggiorna il contatore web: non usare i due editor contemporaneamente sullo stesso file.
 
 ## Utilizzo
 
@@ -52,3 +52,8 @@ Vitest usa copie temporanee del database. Playwright usa esclusivamente `.local/
 Per i test originali di dominio, da `legacy/IPF_Mapper_M7.2`, eseguire i moduli `ipf.tests.test_milestone1` fino a `test_milestone71` (senza suffisso GUI). La discovery completa richiede PySide6, perché il test M7.2 GUI lo importa senza skip. La nuova app non dipende da PySide.
 
 Vedi [assessment](docs/ASSESSMENT.md), [stato della migrazione](docs/MIGRATION_REPORT.md) e [verifiche dei dati](docs/DATA_SAFETY.md) per perimetro, evidenze e debito residuo.
+
+### Lavorare su un nuovo progetto
+Apri **Progetti → Nuovo progetto**, inserisci il nome del progetto e del processo e scegli **Crea progetto vuoto**. Aggiungi funzioni, attività e informazioni dalla libreria. **Regole** apre la gestione delle regole di stato, con confronti o attività prerequisito e stati configurabili. **Mezzi e icone** apre la scelta visuale del mezzo, disponibile anche nelle proprietà. **Libreria gruppi** salva gruppi riutilizzabili con membri e relazioni interne.
+
+**Seleziona** modifica gli elementi o seleziona una regione; **Mano** sposta esclusivamente la vista. **100%** ripristina una scala leggibile; **Adatta processo** mostra la panoramica completa. Le categorie della navigazione sono richiudibili e la ricerca apre solo i risultati corrispondenti.

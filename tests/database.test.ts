@@ -153,3 +153,89 @@ it("non crea un database vuoto se il path personale è errato", async () => {
 it("protegge il database originale incluso", async () => {
   await expect(openRepository(original)).rejects.toThrow(/protetto/);
 });
+it("progetti vuoti indipendenti con Unicode e validazione input atomica", () => {
+  const original = repo.read(1),
+    snapshot = repo.read(2);
+  const first = repo.createProject({
+    name: "Progetto è 日本語",
+    processName: "Acquisti",
+  });
+  const second = repo.createProject({
+    name: "Altro progetto",
+    processName: "Acquisti",
+  });
+  expect(first.entities).toEqual([]);
+  expect(first.relations).toEqual([]);
+  expect(first.rules).toEqual([]);
+  expect(first.revision.workspaceId).not.toBe(second.revision.workspaceId);
+  expect(
+    repo.projects().find((p) => p.id === first.revision.modelId)?.projectName,
+  ).toBe("Progetto è 日本語");
+  expect(repo.read(1)).toEqual(original);
+  expect(repo.read(2)).toEqual(snapshot);
+  const count = repo.projects().length;
+  expect(() => repo.createProject({ name: " ", processName: "x" })).toThrow();
+  expect(repo.projects()).toHaveLength(count);
+});
+it("authoring regole crea AST compatibili e conserva regole e snapshot precedenti", () => {
+  const snapshot = repo.read(2),
+    before = repo.read(1),
+    old = before.rules.find((r) => r.recipe && "op" in r.recipe)!;
+  const ast = repo.rows("SELECT * FROM expression_node ORDER BY id");
+  const changed = repo.saveStateRule(1, {
+    version: before.revision.version,
+    ruleId: old.id,
+    name: "Regola è modificata",
+    target: old.target,
+    purpose: old.purpose,
+    trueState: old.trueState,
+    falseState: old.falseState,
+    recipe: old.recipe,
+  });
+  expect(
+    changed.rules.find((r) => r.name === "Regola è modificata")?.id,
+  ).not.toBe(old.id);
+  expect(repo.read(2)).toEqual(snapshot);
+  for (const row of ast)
+    expect(
+      repo.row("SELECT * FROM expression_node WHERE id=?", row.id),
+    ).toEqual(row);
+  expect(
+    repo.row("SELECT name FROM rule_definition WHERE id=?", old.id).name,
+  ).toBe(old.name);
+  const created = repo.saveStateRule(1, {
+    version: changed.revision.version,
+    name: "Prerequisito",
+    target: old.target,
+    purpose: "ENABLEMENT",
+    trueState: "ENABLED",
+    falseState: "BLOCKED",
+    recipe: {
+      kind: "completed",
+      identity_id: Number(before.entities.find((e) => e.type === "ACTION")!.id),
+    },
+  });
+  expect(created.rules).toHaveLength(before.rules.length + 1);
+  expect(repo.rows("PRAGMA foreign_key_check")).toEqual([]);
+  expect(() =>
+    repo.saveStateRule(1, {
+      version: 0,
+      name: "Conflitto",
+      target: old.target,
+      purpose: "REQUIREMENT",
+      trueState: "REQUIRED",
+      falseState: "OPTIONAL",
+      recipe: {
+        op: "EQ",
+        left: { kind: "literal", value: true },
+        right: { kind: "literal", value: true },
+      },
+    }),
+  ).toThrow(/cambiata/);
+  const last = created.rules.at(-1)!;
+  const removed = repo.deleteRule(1, last.id, created.revision.version);
+  expect(removed.rules).toHaveLength(before.rules.length);
+  expect(
+    repo.row("SELECT id FROM rule_definition WHERE id=?", last.id).id,
+  ).toBe(last.id);
+});

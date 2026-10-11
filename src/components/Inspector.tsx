@@ -1,3 +1,4 @@
+import { MeansIcon, meansIcons } from "./MeansIcon";
 import { useEffect, useState } from "react";
 import { X, LockKeyhole, Unlock, Trash2 } from "lucide-react";
 import {
@@ -169,7 +170,26 @@ export function Inspector({
               <label key={p.code}>
                 {p.name}
                 {p.unit && ` (${p.unit})`}
-                {p.valueType === "BOOLEAN" ? (
+                {p.code === "MEANS_ICON" ? (
+                  <div
+                    className="means-icon-picker"
+                    role="group"
+                    aria-label="Icona mezzo"
+                  >
+                    {meansIcons.map(([kind, label]) => (
+                      <button
+                        type="button"
+                        key={kind}
+                        title={`Icona ${label}`}
+                        aria-pressed={draft.properties.MEANS_ICON === kind}
+                        onClick={() => setProperty(p.code, kind)}
+                      >
+                        <MeansIcon kind={kind} />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : p.valueType === "BOOLEAN" ? (
                   <select
                     value={
                       draft.properties[p.code] === undefined ||

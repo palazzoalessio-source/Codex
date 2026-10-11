@@ -1,6 +1,9 @@
 import { z } from "zod";
 import {
   catalogSchema,
+  projectListSchema,
+  projectCreateSchema,
+  stateRuleInputSchema,
   documentSchema,
   type ProcessDocument,
 } from "../domain/model";
@@ -30,6 +33,28 @@ export const revisionListSchema = z.array(
 );
 export type RevisionEntry = z.infer<typeof revisionListSchema>[number];
 export const api = {
+  saveRule: async (rid: number, input: z.infer<typeof stateRuleInputSchema>) =>
+    documentSchema.parse(
+      await request(`/revisions/${rid}/rules`, {
+        method: "POST",
+        body: JSON.stringify(stateRuleInputSchema.parse(input)),
+      }),
+    ),
+  deleteRule: async (rid: number, ruleId: number, version: number) =>
+    documentSchema.parse(
+      await request(`/revisions/${rid}/rules/${ruleId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ version }),
+      }),
+    ),
+  projects: async () => projectListSchema.parse(await request("/projects")),
+  createProject: async (input: z.infer<typeof projectCreateSchema>) =>
+    documentSchema.parse(
+      await request("/projects", {
+        method: "POST",
+        body: JSON.stringify(projectCreateSchema.parse(input)),
+      }),
+    ),
   catalog: async () => catalogSchema.parse(await request("/catalog")),
   list: async () => revisionListSchema.parse(await request("/revisions")),
   read: async (id: number) =>

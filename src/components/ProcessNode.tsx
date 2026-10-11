@@ -1,3 +1,4 @@
+import { MeansIcon } from "./MeansIcon";
 import { memo } from "react";
 import {
   Handle,
@@ -31,7 +32,7 @@ export type ProcessNodeData = {
   ) => void;
   [key: string]: unknown;
 };
-export type CanvasNode = Node<ProcessNodeData, "process">;
+export type CanvasNode = Node<ProcessNodeData, "process" | "participant">;
 const icons = {
   ACTION: Zap,
   DECISION: GitBranch,
@@ -43,6 +44,7 @@ export const ProcessNode = memo(function ProcessNode({
   data,
   selected,
   id,
+  width,
 }: NodeProps<CanvasNode>) {
   const e = data.entity,
     Icon = icons[e.type as keyof typeof icons] ?? Users;
@@ -50,7 +52,7 @@ export const ProcessNode = memo(function ProcessNode({
     group = e.type === "PROCESS_GROUP";
   return (
     <div
-      className={`process-node ${data.lane ? "lane-node" : ""} ${group ? "group-node" : ""} ${e.type === "INFORMATION" ? "information-node" : ""} ${isCritical ? "critical-node" : ""} ${selected ? "selected-node" : ""} ${e.layout.collapsed ? "collapsed-node" : ""}`}
+      className={`process-node ${data.lane ? "lane-node" : ""} ${group ? "group-node" : ""} ${e.type === "INFORMATION" ? "information-node" : ""} ${e.type === "MEANS" ? "means-node" : ""} ${isCritical ? "critical-node" : ""} ${selected ? "selected-node" : ""} ${e.layout.collapsed ? "collapsed-node" : ""}`}
     >
       {data.editable && (group || data.lane) && (
         <NodeResizer
@@ -70,7 +72,11 @@ export const ProcessNode = memo(function ProcessNode({
         />
       )}
       <div className="node-heading">
-        <Icon size={15} />
+        {e.type === "MEANS" ? (
+          <MeansIcon kind={e.properties.MEANS_ICON} size={24} />
+        ) : (
+          <Icon size={15} />
+        )}
         <span>{e.code || e.type.replaceAll("_", " ")}</span>
         {e.layout.locked && <LockKeyhole size={12} />}{" "}
         {isCritical && (
@@ -81,7 +87,14 @@ export const ProcessNode = memo(function ProcessNode({
           />
         )}
       </div>
-      <strong>{e.name}</strong>
+      {isCritical && (
+        <span className="critical-badge" aria-label="Criticità">
+          !
+        </span>
+      )}
+      <strong title={e.name}>
+        {!group && (width ?? 200) < 100 ? e.code || e.name : e.name}
+      </strong>
       {group && (
         <small>
           {e.layout.collapsed
@@ -113,3 +126,12 @@ export const ProcessNode = memo(function ProcessNode({
     </div>
   );
 });
+
+export function ParticipantAnchor() {
+  return (
+    <div className="participant-anchor">
+      <Handle type="target" position={Position.Left} isConnectable={false} />
+      <Handle type="source" position={Position.Right} isConnectable={false} />
+    </div>
+  );
+}

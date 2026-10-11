@@ -13,7 +13,7 @@ import {
   type Connection,
   type NodeChange,
 } from "@xyflow/react";
-import { ProcessNode, type CanvasNode } from "./ProcessNode";
+import { ProcessNode, ParticipantAnchor, type CanvasNode } from "./ProcessNode";
 import {
   isType,
   type Catalog,
@@ -22,7 +22,11 @@ import {
 } from "../domain/model";
 import { critical } from "../domain/analysis";
 import { applyCommand, type Command } from "../domain/commands";
-const nodeTypes = { process: ProcessNode };
+import { FlowEdge } from "./FlowEdge";
+import { presentationLayouts } from "../domain/presentation";
+import referenceLayout from "../../legacy/IPF_Mapper_M7.2/ipf/ui/reference_layout.json";
+const edgeTypes = { flow: FlowEdge };
+const nodeTypes = { process: ProcessNode, participant: ParticipantAnchor };
 
 export function EditorCanvas({
   doc,
@@ -51,11 +55,12 @@ export function EditorCanvas({
   search: string;
   panMode: boolean;
 }) {
-  const { setCenter, setViewport } = useReactFlow(),
+  const { setCenter, setViewport, screenToFlowPosition } = useReactFlow(),
     viewport = useViewport();
   const [size, setSize] = useState({ width: 1100, height: 700 }),
     [container, setContainer] = useState<HTMLDivElement | null>(null),
-    [nodes, setNodes] = useState<CanvasNode[]>([]);
+    [nodes, setNodes] = useState<CanvasNode[]>([]),
+    [showMeans, setShowMeans] = useState(false);
   const editable = doc.revision.status === "DRAFT";
   const handleSelection = useCallback(
     ({ nodes }: { nodes: CanvasNode[] }) => onSelection(nodes.map((n) => n.id)),
@@ -70,7 +75,7 @@ export function EditorCanvas({
     if (!container) return;
     const observer = new ResizeObserver(([entry]) =>
       setSize({
-        width: entry.contentRect.width,
+        width: Math.max(1, entry.contentRect.width - 140),
         height: entry.contentRect.height,
       }),
     );
@@ -86,30 +91,10 @@ export function EditorCanvas({
       ),
     [doc.relations],
   );
-  const geometry = useMemo(() => {
-    const result = new Map(doc.entities.map((e) => [e.id, { ...e.layout }]));
-    const groups = doc.entities.filter((e) => e.type === "PROCESS_GROUP");
-    for (let n = 0; n < groups.length; n++)
-      for (const group of groups) {
-        if (group.layout.width && group.layout.height) continue;
-        const members = doc.entities
-          .filter((e) => parent.get(e.id) === group.id)
-          .map((e) => result.get(e.id)!);
-        if (!members.length) continue;
-        const x = Math.min(...members.map((e) => e.x)) - 30,
-          y = Math.min(...members.map((e) => e.y)) - 55;
-        result.set(group.id, {
-          ...group.layout,
-          x,
-          y,
-          width:
-            Math.max(...members.map((e) => e.x + (e.width ?? 200))) - x + 30,
-          height:
-            Math.max(...members.map((e) => e.y + (e.height ?? 90))) - y + 25,
-        });
-      }
-    return result;
-  }, [doc.entities, parent]);
+  const geometry = useMemo(
+    () => presentationLayouts(doc),
+    [doc.entities, doc.relations],
+  );
   const hidden = useMemo(() => {
     const result = new Map<string, string>();
     for (const entity of doc.entities) {
@@ -144,16 +129,6 @@ export function EditorCanvas({
     [dispatch, parent, geometry],
   );
   const projected = useMemo(() => {
-    const right =
-      Math.max(
-        ...doc.entities.map((e) => e.layout.x + (e.layout.width ?? 220)),
-        size.width / viewport.zoom - viewport.x / viewport.zoom,
-      ) + 300;
-    const left = Math.min(
-      -viewport.x / viewport.zoom,
-      -120,
-      ...doc.entities.map((e) => e.layout.x - 50),
-    );
     const depth = (id: string): number => {
       let count = 0,
         p = parent.get(id);
@@ -166,7 +141,17 @@ export function EditorCanvas({
       return count;
     };
     return doc.entities
-      .filter((e) => e.type !== "INFORMATION_FLOW" && !hidden.has(e.id))
+      .filter(
+        (e) =>
+          e.type !== "INFORMATION_FLOW" &&
+          (showMeans || e.type !== "MEANS" || e.id === focusId) &&
+          (!isType(e.type, "PARTICIPANT", catalog) ||
+            doc.relations.some(
+              (r) =>
+                ["SOURCE", "TARGET"].includes(r.semantic) && r.target === e.id,
+            )) &&
+          !hidden.has(e.id),
+      )
       .sort((a, b) => depth(a.id) - depth(b.id))
       .map((entity): CanvasNode => {
         const lane = isType(entity.type, "PARTICIPANT", catalog),
@@ -176,26 +161,31 @@ export function EditorCanvas({
           offset = p ? geometry.get(p) : null;
         return {
           id: entity.id,
-          type: "process",
+          type: lane ? "participant" : "process",
           parentId: lane ? undefined : p,
           position: lane
-            ? { x: left, y: g.y - 30 }
+            ? { x: 0, y: g.y + 40 }
             : { x: g.x - (offset?.x ?? 0), y: g.y - (offset?.y ?? 0) },
-          data: { entity, lane, editable, onResize: resize },
-          draggable: editable && !lane && !entity.layout.locked,
-          connectable: editable && !entity.layout.locked,
-          selectable: true,
+          data: {
+            entity,
+            lane,
+            editable: editable && !panMode,
+            onResize: resize,
+          },
+          draggable: editable && !panMode && !lane && !entity.layout.locked,
+          connectable: editable && !panMode && !entity.layout.locked,
+          selectable: !panMode && !lane,
           zIndex: lane ? -20 : group ? -5 : 5,
           style: {
             width: lane
-              ? right - left
+              ? 1
               : group
                 ? entity.layout.collapsed
                   ? 240
                   : (g.width ?? 460)
                 : (g.width ?? 200),
             height: lane
-              ? (g.height ?? 140)
+              ? 1
               : group
                 ? entity.layout.collapsed
                   ? 100
@@ -213,16 +203,17 @@ export function EditorCanvas({
       });
   }, [
     doc.entities,
+    doc.relations,
     catalog,
     parent,
     geometry,
     hidden,
     editable,
+    panMode,
     resize,
-    viewport.x,
-    viewport.zoom,
-    size.width,
     search,
+    showMeans,
+    focusId,
   ]);
   useEffect(() => {
     setNodes((old) =>
@@ -237,6 +228,7 @@ export function EditorCanvas({
       .filter(
         (e) =>
           e.type !== "INFORMATION_FLOW" &&
+          (showMeans || e.type !== "MEANS" || e.id === focusId) &&
           !isType(e.type, "PARTICIPANT", catalog) &&
           !hidden.has(e.id),
       )
@@ -279,7 +271,21 @@ export function EditorCanvas({
   useEffect(() => {
     void setViewport(doc.viewport);
     if (doc.viewport.x === 0 && doc.viewport.y === 0) {
-      const timer = setTimeout(() => void fitProcess(), 150);
+      const timer = setTimeout(() => {
+        const visible = doc.entities.filter(
+          (e) =>
+            e.type !== "INFORMATION_FLOW" &&
+            (showMeans || e.type !== "MEANS" || e.id === focusId) &&
+            !isType(e.type, "PARTICIPANT", catalog) &&
+            !hidden.has(e.id),
+        );
+        if (visible.length)
+          void setViewport({
+            x: 170 - Math.min(...visible.map((e) => geometry.get(e.id)!.x)),
+            y: 70 - Math.min(...visible.map((e) => geometry.get(e.id)!.y)),
+            zoom: 1,
+          });
+      }, 150);
       return () => clearTimeout(timer);
     }
   }, [doc.revision.id, setViewport]);
@@ -293,10 +299,14 @@ export function EditorCanvas({
       })),
     );
     if (target)
-      void setCenter(target.x + 100, target.y + 45, {
-        zoom: 0.9,
-        duration: 400,
-      });
+      void setCenter(
+        target.x + (target.width ?? 200) / 2,
+        target.y + (target.height ?? 94) / 2,
+        {
+          zoom: 1,
+          duration: 400,
+        },
+      );
   }, [focusId, doc.revision.id, setCenter]);
   const edges = useMemo(() => {
     const result: Edge[] = [],
@@ -321,10 +331,9 @@ export function EditorCanvas({
         id: "flow:" + flow.id,
         source: project(source),
         target: project(target),
-        type: "smoothstep",
+        type: "flow",
         reconnectable: editable && !hidden.has(source) && !hidden.has(target),
         label: [
-          info ? by.get(info)?.name : null,
           via ? by.get(via)?.name : null,
           flow.properties.TARGET_LEAD_TIME,
         ]
@@ -339,7 +348,38 @@ export function EditorCanvas({
           type: MarkerType.ArrowClosed,
           color: isCritical ? "#df3449" : "#6f849d",
         },
-        data: { flowId: flow.id },
+        data: {
+          ...(() => {
+            const sourceEntity = by.get(source)!,
+              targetEntity = by.get(target)!;
+            const presets = referenceLayout.nodes as Record<
+              string,
+              { baseline: number[]; rect: number[] }
+            >;
+            const badges = referenceLayout.badges as Record<string, number[]>;
+            const badge = badges[`${sourceEntity.code}|${targetEntity.code}`];
+            const untouched = (e: Entity) => {
+              const p = presets[e.code];
+              return (
+                p &&
+                !e.layout.width &&
+                e.layout.x === p.baseline[0] &&
+                e.layout.y === p.baseline[1]
+              );
+            };
+            return badge &&
+              untouched(sourceEntity) &&
+              untouched(targetEntity) &&
+              geometry.get(source)?.x !== sourceEntity.layout.x
+              ? { labelX: badge[0] * 1.5, labelY: badge[1] * 1.5 }
+              : {};
+          })(),
+          information: info ? by.get(info)?.name : null,
+          flowId: flow.id,
+          meansIcon: via
+            ? (by.get(via)?.properties.MEANS_ICON ?? "Generic")
+            : "Generic",
+        },
       });
     }
     for (const r of doc.relations.filter(
@@ -368,7 +408,7 @@ export function EditorCanvas({
       });
     }
     return result;
-  }, [doc, hidden, editable]);
+  }, [doc, hidden, editable, geometry]);
   const commitPositions = (draggedId: string) => {
     const by = new Map(nodes.map((n) => [n.id, n]));
     const absolute = (
@@ -401,11 +441,12 @@ export function EditorCanvas({
           if (!entity || !isType(entity.type, "ACTION", catalog)) continue;
           const lane = lanes.find(
             (l, n) =>
-              p.y + 40 >= l.layout.y - 30 &&
+              p.y + 40 >= geometry.get(l.id)!.y &&
               p.y + 40 <
-                (lanes[n + 1]?.layout.y ??
-                  l.layout.y + (l.layout.height ?? 140)) -
-                  30,
+                ((lanes[n + 1]
+                  ? geometry.get(lanes[n + 1].id)!.y
+                  : undefined) ??
+                  geometry.get(l.id)!.y + (geometry.get(l.id)!.height ?? 140)),
           );
           if (lane)
             next = applyCommand(
@@ -443,9 +484,7 @@ export function EditorCanvas({
           !editable
         )
           return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (e.clientX - rect.left - viewport.x) / viewport.zoom,
-          y = (e.clientY - rect.top - viewport.y) / viewport.zoom;
+        const { x, y } = screenToFlowPosition({ x: e.clientX, y: e.clientY });
         const entity: Entity = {
           id: crypto.randomUUID(),
           uid: crypto.randomUUID(),
@@ -467,108 +506,152 @@ export function EditorCanvas({
         onSelect(entity);
       }}
     >
-      <ReactFlow<CanvasNode>
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={handleNodeChanges}
-        onNodeDragStop={(_event, node) => commitPositions(node.id)}
-        onNodeClick={(_e, n) => onSelect(n.data.entity)}
-        onNodeDoubleClick={(_e, n) => {
-          if (n.data.entity.type === "PROCESS_GROUP" && editable)
-            dispatch({
-              type: "upsert",
-              entity: {
-                ...n.data.entity,
-                layout: {
-                  ...n.data.entity.layout,
-                  collapsed: !n.data.entity.layout.collapsed,
-                },
-              },
-            });
-        }}
-        onPaneClick={() => onSelect(null)}
-        onSelectionChange={handleSelection}
-        onConnect={onConnect}
-        onEdgeClick={(_e, edge) => {
-          if (edge.data?.flowId) onFlow(String(edge.data.flowId));
-          else if (edge.data?.relationId) {
-            const r = doc.relations.find(
-              (r) => r.id === String(edge.data?.relationId),
+      <div className="lane-backgrounds" aria-hidden="true">
+        {doc.entities
+          .filter((e) => isType(e.type, "PARTICIPANT", catalog))
+          .sort((a, b) => a.layout.y - b.layout.y)
+          .map((e, i, lanes) => {
+            const top = geometry.get(e.id)!.y * viewport.zoom + viewport.y;
+            const bottom = lanes[i + 1]
+              ? geometry.get(lanes[i + 1].id)!.y * viewport.zoom + viewport.y
+              : Math.max(
+                  size.height,
+                  top + (geometry.get(e.id)!.height ?? 140) * viewport.zoom,
+                );
+            return (
+              <div
+                key={e.id}
+                className="lane-band"
+                style={{
+                  top: i === 0 ? Math.min(0, top) : top,
+                  height: bottom - (i === 0 ? Math.min(0, top) : top),
+                  background: [
+                    "#edf5ff",
+                    "#edf9f2",
+                    "#f3edfb",
+                    "#fcf7e9",
+                    "#faedf1",
+                    "#eaf3f9",
+                  ][i % 6],
+                }}
+              />
             );
-            if (r) {
-              onSelect(doc.entities.find((e) => e.id === r.source) ?? null);
-            }
-          }
-        }}
-        onReconnect={(edge, c) => {
-          if (edge.data?.flowId) onFlow(String(edge.data.flowId), c);
-          else {
-            const id = String(edge.data?.relationId ?? "");
-            const relation = doc.relations.find((r) => r.id === id);
-            if (relation && c.source && c.target) {
-              const source =
-                  relation.semantic === "INPUT" ? c.target : c.source,
-                target = relation.semantic === "INPUT" ? c.source : c.target;
+          })}
+      </div>
+      <div className="flow-surface">
+        <ReactFlow<CanvasNode>
+          className={panMode ? "mode-pan" : "mode-select"}
+          nodesDraggable={!panMode && editable}
+          nodesConnectable={!panMode && editable}
+          elementsSelectable={!panMode}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={handleNodeChanges}
+          onNodeDragStop={(_event, node) => commitPositions(node.id)}
+          onNodeClick={(_e, n) => {
+            if (!panMode) onSelect(n.data.entity);
+          }}
+          onNodeDoubleClick={(_e, n) => {
+            if (!panMode && n.data.entity.type === "PROCESS_GROUP" && editable)
               dispatch({
-                type: "replace",
-                document: {
-                  ...doc,
-                  relations: doc.relations.map((r) =>
-                    r.id === id ? { ...r, source, target } : r,
-                  ),
+                type: "upsert",
+                entity: {
+                  ...n.data.entity,
+                  layout: {
+                    ...n.data.entity.layout,
+                    collapsed: !n.data.entity.layout.collapsed,
+                  },
                 },
               });
+          }}
+          onPaneClick={() => {
+            if (!panMode) onSelect(null);
+          }}
+          onSelectionChange={handleSelection}
+          onConnect={onConnect}
+          onEdgeClick={(_e, edge) => {
+            if (edge.data?.flowId) onFlow(String(edge.data.flowId));
+            else if (edge.data?.relationId) {
+              const r = doc.relations.find(
+                (r) => r.id === String(edge.data?.relationId),
+              );
+              if (r) {
+                onSelect(doc.entities.find((e) => e.id === r.source) ?? null);
+              }
             }
-          }
-        }}
-        onMoveEnd={(_e, v) => onViewport(v)}
-        snapToGrid={grid}
-        snapGrid={[20, 20]}
-        minZoom={0.05}
-        maxZoom={2.5}
-        panOnDrag={panMode ? [0, 1, 2] : [1, 2]}
-        selectionOnDrag={!panMode}
-        selectionKeyCode="Shift"
-        multiSelectionKeyCode={["Control", "Meta"]}
-        deleteKeyCode={null}
-        nodesFocusable
-        edgesFocusable
-        onlyRenderVisibleElements
-        defaultViewport={doc.viewport}
-        fitView={false}
-        fitViewOptions={{ padding: 0.15, maxZoom: 0.9 }}
-      >
-        {grid && <Background gap={20} size={1} color="#bdcad7" />}
-        <Controls
-          showInteractive={false}
-          showFitView={false}
-          fitViewOptions={{
-            nodes: doc.entities
-              .filter(
-                (e) =>
-                  e.type !== "INFORMATION_FLOW" &&
-                  !isType(e.type, "PARTICIPANT", catalog),
-              )
-              .map((e) => ({ id: e.id })),
-            padding: 0.12,
-            maxZoom: 0.9,
           }}
-        />
-        <MiniMap
-          pannable
-          zoomable
-          nodeColor={(n) => {
-            const e = (n as CanvasNode).data.entity;
-            return critical(e.properties.CRITICALITY)
-              ? "#df3449"
-              : e.type === "PROCESS_GROUP"
-                ? "#9caabe"
-                : "#608eac";
+          onReconnect={(edge, c) => {
+            if (edge.data?.flowId) onFlow(String(edge.data.flowId), c);
+            else {
+              const id = String(edge.data?.relationId ?? "");
+              const relation = doc.relations.find((r) => r.id === id);
+              if (relation && c.source && c.target) {
+                const source =
+                    relation.semantic === "INPUT" ? c.target : c.source,
+                  target = relation.semantic === "INPUT" ? c.source : c.target;
+                dispatch({
+                  type: "replace",
+                  document: {
+                    ...doc,
+                    relations: doc.relations.map((r) =>
+                      r.id === id ? { ...r, source, target } : r,
+                    ),
+                  },
+                });
+              }
+            }
           }}
-          maskColor="rgba(228,235,244,0.75)"
-        />
-      </ReactFlow>
+          onMoveEnd={(_e, v) => onViewport(v)}
+          snapToGrid={grid}
+          snapGrid={[20, 20]}
+          minZoom={0.05}
+          maxZoom={2.5}
+          panOnDrag={panMode ? [0, 1, 2] : [1, 2]}
+          selectionOnDrag={!panMode}
+          selectionKeyCode="Shift"
+          multiSelectionKeyCode={["Control", "Meta"]}
+          deleteKeyCode={null}
+          nodesFocusable
+          edgesFocusable
+          onlyRenderVisibleElements
+          defaultViewport={doc.viewport}
+          fitView={false}
+          fitViewOptions={{ padding: 0.15, maxZoom: 0.9 }}
+        >
+          {grid && <Background gap={20} size={1} color="#bdcad7" />}
+          <Controls
+            showInteractive={false}
+            showFitView={false}
+            fitViewOptions={{
+              nodes: doc.entities
+                .filter(
+                  (e) =>
+                    e.type !== "INFORMATION_FLOW" &&
+                    (showMeans || e.type !== "MEANS" || e.id === focusId) &&
+                    !isType(e.type, "PARTICIPANT", catalog),
+                )
+                .map((e) => ({ id: e.id })),
+              padding: 0.12,
+              maxZoom: 0.9,
+            }}
+          />
+          <MiniMap
+            pannable
+            zoomable
+            nodeColor={(n) => {
+              const e = (n as CanvasNode).data.entity;
+              return critical(e.properties.CRITICALITY)
+                ? "#df3449"
+                : e.type === "PROCESS_GROUP"
+                  ? "#9caabe"
+                  : "#608eac";
+            }}
+            maskColor="rgba(228,235,244,0.75)"
+          />
+        </ReactFlow>
+      </div>
       <div className="lane-labels">
         {doc.entities
           .filter((e) => isType(e.type, "PARTICIPANT", catalog))
@@ -576,7 +659,9 @@ export function EditorCanvas({
             <div
               key={e.id}
               className="lane-label"
-              style={{ top: (e.layout.y - 30) * viewport.zoom + viewport.y }}
+              style={{
+                top: geometry.get(e.id)!.y * viewport.zoom + viewport.y,
+              }}
             >
               <span>{e.code || "FUNZIONE"}</span>
               <strong>{e.name}</strong>
@@ -588,6 +673,29 @@ export function EditorCanvas({
           ? "Trascina lo sfondo per navigare"
           : "Trascina per selezionare"}{" "}
         · Space per pan · Shift per selezione · doppio clic sui gruppi
+      </div>
+      {!doc.entities.length && (
+        <div className="empty-canvas">
+          <h2>Il tuo processo inizia qui</h2>
+          <p>
+            Trascina un elemento dalla libreria o clicca sul tipo da aggiungere.
+          </p>
+          <p>
+            Aggiungi una funzione per creare la prima lane, poi le attività e i
+            flussi.
+          </p>
+        </div>
+      )}
+      <div className="canvas-view-tools">
+        <button onClick={() => void setViewport({ ...viewport, zoom: 1 })}>
+          100%
+        </button>
+        <button
+          aria-pressed={showMeans}
+          onClick={() => setShowMeans(!showMeans)}
+        >
+          Mezzi {showMeans ? "visibili" : "nascosti"}
+        </button>
       </div>
       <button className="fit-button" onClick={() => void fitProcess()}>
         Adatta processo

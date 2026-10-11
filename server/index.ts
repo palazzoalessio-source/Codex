@@ -43,7 +43,35 @@ app.get("/api/health", (_req, res) =>
   }),
 );
 app.get("/api/catalog", (_req, res) => res.json(repo.catalog()));
+app.get("/api/group-templates", (_req, res) => res.json(repo.groupTemplates()));
+app.post("/api/group-templates", (req, res) =>
+  res.status(201).json(repo.saveGroupTemplate(req.body)),
+);
+app.get("/api/projects", (_req, res) => res.json(repo.projects()));
+app.post("/api/projects", (req, res) =>
+  res.status(201).json(repo.createProject(req.body)),
+);
 app.get("/api/revisions", (_req, res) => res.json(repo.list()));
+app.post("/api/revisions/:id/rules", (req, res) =>
+  res
+    .status(201)
+    .json(
+      repo.saveStateRule(
+        z.coerce.number().int().positive().parse(req.params.id),
+        req.body,
+      ),
+    ),
+);
+app.delete("/api/revisions/:id/rules/:ruleId", (req, res) =>
+  res.json(
+    repo.deleteRule(
+      z.coerce.number().int().positive().parse(req.params.id),
+      z.coerce.number().int().positive().parse(req.params.ruleId),
+      z.object({ version: z.number().int().nonnegative() }).parse(req.body)
+        .version,
+    ),
+  ),
+);
 app.get("/api/revisions/:id", (req, res) =>
   res.json(repo.read(z.coerce.number().int().positive().parse(req.params.id))),
 );
@@ -86,11 +114,9 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
-    res
-      .status(error instanceof ConflictError ? 409 : 400)
-      .json({
-        error: error instanceof Error ? error.message : "Errore inatteso.",
-      });
+    res.status(error instanceof ConflictError ? 409 : 400).json({
+      error: error instanceof Error ? error.message : "Errore inatteso.",
+    });
   },
 );
 const server = app.listen(

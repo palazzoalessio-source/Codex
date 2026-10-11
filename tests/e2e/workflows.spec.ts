@@ -9,6 +9,7 @@ test("apertura legacy, proprietà UTF-8, valore operativo, save/reload e analisi
   await expect(
     page.getByRole("heading", { name: "DEMO — Procurement RFQ AS-IS" }),
   ).toBeVisible();
+  await page.getByLabel("Cerca nel processo").fill("Analizza offerte");
   await page
     .locator(".element-list")
     .getByRole("button", { name: "Analizza offerte", exact: true })
@@ -25,6 +26,7 @@ test("apertura legacy, proprietà UTF-8, valore operativo, save/reload e analisi
     timeout: 10000,
   });
   await page.reload();
+  await page.getByLabel("Cerca nel processo").fill("Analizza offerte");
   await page
     .locator(".element-list button")
     .filter({ hasText: "Analizza offerte — qualità è già pronta" })
@@ -149,6 +151,15 @@ test("handles creano un flow, drag sposta un nodo e pan/zoom persistono", async 
     );
   await expect(source).toBeVisible();
   await expect(target).toBeVisible();
+  await source.hover();
+  expect(
+    await source.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return (
+        document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === el
+      );
+    }),
+  ).toBe(true);
   const s = await source.boundingBox(),
     t = await target.boundingBox();
   await page.mouse.move(s!.x + s!.width / 2, s!.y + s!.height / 2);
@@ -225,6 +236,7 @@ test("resize e collapse di un gruppo sopravvivono al reload", async ({
     );
   };
   const before = await getGroup();
+  await page.getByLabel("Cerca nel processo").fill("Gruppo ridimensionabile");
   await page
     .locator(".element-list")
     .getByRole("button", { name: "Gruppo ridimensionabile", exact: true })
@@ -233,6 +245,7 @@ test("resize e collapse di un gruppo sopravvivono al reload", async ({
   const group = page.locator(`.react-flow__node[data-id="${before.id}"]`);
   const handle = group.locator(".react-flow__resize-control.bottom.right");
   await expect(handle).toBeVisible();
+  await handle.hover();
   const box = await handle.boundingBox();
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await page.mouse.down();
@@ -244,6 +257,7 @@ test("resize e collapse di un gruppo sopravvivono al reload", async ({
   await group.locator("strong").dblclick();
   await expect.poll(async () => (await getGroup()).layout.collapsed).toBe(true);
   await page.reload();
+  await page.getByLabel("Cerca nel processo").fill("Gruppo ridimensionabile");
   await page
     .locator(".element-list")
     .getByRole("button", { name: "Gruppo ridimensionabile", exact: true })

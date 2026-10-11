@@ -46,8 +46,8 @@ React Flow è adottato per interazioni mature e per il rendering React. Non sono
 | Validazione | Riferimenti, firme, cardinalità, proprietà, ownership, nodi isolati, informazioni orfane, flow incompleti, cicli e decisioni senza esiti sufficienti |
 | Analisi AS-IS/TO-BE | Aggiunti/eliminati/modificati per identità, ownership, mezzi, flow, membership, relazioni, tempi/proprietà, classificazioni e metriche strutturali |
 | Parametri e policy | Valori persistiti modificabili; ricette M7.1 di confronto/completed valutate senza policy nel codice |
-| Regole | Ricette e definizioni preservate; authoring regole/espressioni resta nel client Python |
-| Libreria processi | Apertura di modelli e revisioni esistenti, clone; creazione di nuovi workspace/processi resta nel client Python |
+| Regole | Libreria con creazione, modifica e rimozione di regole di stato: confronto e prerequisito completato; compilazione AST compatibile, definizioni precedenti preservate. Espressioni generali/derivazioni avanzate restano legacy |
+| Libreria processi | Libreria progetti ricercabile, creazione di workspace/processo vuoto e prima revisione AS-IS, apertura e clone delle revisioni |
 | Esecuzioni | Lettura istanze, osservazioni e correzioni; inserimento, snapshot di esecuzione e analisi runtime completa restano Python |
 | Analisi avanzata | Niente lead time/saving arbitrario, inferenza di parallelismo da layout, bottleneck senza evidenza, heatmap o worker non verificati |
 
@@ -59,7 +59,7 @@ Le suite e i comandi sono nel README. Test di dominio: catalogo, adapter reale, 
 
 ## Debito e prossime fasi
 1. Validare una copia del database personale e confronto semantico col client Python sul deployment effettivo.
-2. Portare il motore completo di espressioni/derivazioni, editor di regole e validation specifica delle loro AST con test di equivalenza Python/TS.
+2. Portare il motore completo di espressioni/derivazioni, editor di espressioni avanzate e validation specifica delle loro AST con test di equivalenza Python/TS.
 3. Portare creazione snapshot di execution, osservazioni e correzioni, analisi degli intervalli, waiting, repeat/rework, parallelismo osservato e storico/scenario.
 4. Allargare test di reconnect, nested groups, recovery conflittuale, accessibilità, dispositivi touch e benchmark su processi grandi. Il rendering è memoizzato e viewport-cullato, ma non c'è una promessa di performance basata su benchmark non eseguiti.
 5. Layout automatico ELK come comando annullabile, pannelli ridimensionabili/docking solo se utili, audit log persistente anziché sola history in memoria, report e heatmap supportati da evidenze.
@@ -70,3 +70,14 @@ La configurazione cloud salvata prepara Node e dipendenze/build/test e registra 
 Esiti e perimetro della verifica effettivamente eseguita: [VERIFICATION.md](VERIFICATION.md).
 
 Schermate della nuova implementazione: [editor](editor.png) e [analisi](analysis.png).
+
+## Correzioni UX e parità dopo revisione
+- Selezione e mano sono modalità distinte. La mano non trascina nodi, gruppi o lane. Lane come sfondo, coordinate sincronizzate allo zoom e gutter indipendente per etichette; ultimo sfondo copre l’altezza disponibile.
+- Vista iniziale al 100%, panoramica esplicita e ritorno al 100%; dimensioni dei controlli e del testo aumentate. Navigazione per categorie richiudibili e ricerca.
+- Riutilizzo del preset grafico JSON originale Python solo sui dati RFQ con coordinate baseline ancora intatte. Il preset è una proiezione visuale e non cambia le coordinate persistite; modifiche manuali prevalgono.
+- Icone SVG dei mezzi sui flussi, libreria delle icone (Mail, ERP, Database, telefono, Teams, portale, lettera, cloud, corriere, cartella, altro) e scelta nell’inspector. Gli elementi Mezzo possono essere focalizzati dalla navigazione; i flussi mostrano sempre l’icona del canale associato.
+- Libreria gruppi persistente SQLite: salvataggio di un gruppo con membri, sottogruppi e relazioni interne; inserimento con nuove identità e codici indipendenti. Le regole e i collegamenti esterni non fanno parte del template.
+- Gestione regole di stato nelle revisioni draft. Le modifiche producono nuove definizioni/espressioni, senza alterare le revisioni pubblicate; rimozione della membership conserva i record storici. Le operazioni sulle regole riaprono il documento salvato e ripartono con una nuova history locale.
+- Apertura dell’ultimo progetto usato conservata sul browser; revisioni nel selettore limitate al processo corrente.
+
+Schermate aggiornate: [panoramica](overview.png), [progetti](projects.png), [editor regole](rules.png), [elenco regole](rules-list.png), [icone](icons.png).

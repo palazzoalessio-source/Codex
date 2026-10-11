@@ -202,3 +202,47 @@ export function newEntity(
     },
   };
 }
+
+export const projectCreateSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(4000).default(""),
+  processName: z.string().trim().min(1).max(160),
+});
+export const projectListSchema = z.array(
+  z.object({
+    id: z.number(),
+    workspaceId: z.number(),
+    name: z.string(),
+    projectName: z.string(),
+    description: z.string(),
+    createdAt: z.string(),
+    revisionCount: z.number(),
+    entityCount: z.number(),
+    revisionId: z.number(),
+  }),
+);
+export type Project = z.infer<typeof projectListSchema>[number];
+export const ruleStates = {
+  APPLICABILITY: ["APPLICABLE", "NOT_APPLICABLE"],
+  REQUIREMENT: ["REQUIRED", "OPTIONAL", "FORBIDDEN"],
+  ENABLEMENT: ["ENABLED", "BLOCKED"],
+} as const;
+export const stateRuleInputSchema = z
+  .object({
+    version: z.number().int().nonnegative(),
+    ruleId: z.number().int().positive().optional(),
+    name: z.string().trim().min(1).max(200),
+    target: z.string().regex(/^\d+$/),
+    purpose: z.enum(["APPLICABILITY", "REQUIREMENT", "ENABLEMENT"]),
+    trueState: z.string(),
+    falseState: z.string(),
+    recipe: recipeSchema,
+  })
+  .superRefine((r, ctx) => {
+    for (const state of [r.trueState, r.falseState])
+      if (!(ruleStates[r.purpose] as readonly string[]).includes(state))
+        ctx.addIssue({
+          code: "custom",
+          message: "Stato non valido per lo scopo della regola.",
+        });
+  });

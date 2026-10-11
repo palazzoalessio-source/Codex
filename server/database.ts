@@ -5,12 +5,15 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   documentSchema,
+  projectCreateSchema,
+  stateRuleInputSchema,
   recipeSchema,
   isType,
   type ProcessDocument,
   type Catalog,
   type Value,
 } from "../src/domain/model";
+import { captureGroup } from "../src/domain/templates";
 import { structural } from "../src/domain/validation";
 
 const rowSchema = z.record(
@@ -59,6 +62,7 @@ export class Repository {
     this.transaction(() => {
       this.db
         .exec(`CREATE TABLE IF NOT EXISTS web_revision_version(revision_id INTEGER PRIMARY KEY REFERENCES model_revision(id),version INTEGER NOT NULL DEFAULT 0);
+    CREATE TABLE IF NOT EXISTS web_group_template(id INTEGER PRIMARY KEY,uid TEXT NOT NULL UNIQUE,workspace_id INTEGER NOT NULL REFERENCES workspace(id),name TEXT NOT NULL,payload TEXT NOT NULL,created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS web_entity_ui(revision_id INTEGER NOT NULL REFERENCES model_revision(id),identity_id INTEGER NOT NULL REFERENCES entity_identity(id),locked INTEGER NOT NULL DEFAULT 0 CHECK(locked IN (0,1)),PRIMARY KEY(revision_id,identity_id));`);
       if (
         !this.rows(
@@ -131,6 +135,288 @@ export class Repository {
     return this.rows(
       "SELECT r.id,r.revision_code code,r.purpose,r.status,r.process_model_id modelId,m.name,m.workspace_id workspaceId FROM model_revision r JOIN process_model m ON m.id=r.process_model_id WHERE m.retired_at IS NULL ORDER BY r.id",
     );
+  }
+  groupTemplates() {
+    return this.rows(
+      "SELECT id,name,payload FROM web_group_template ORDER BY id DESC",
+    ).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      template: JSON.parse(String(r.payload)),
+    }));
+  }
+  saveGroupTemplate(input: unknown) {
+    const data = z
+      .object({
+        revisionId: z.number().int().positive(),
+        groupId: z.string(),
+        name: z.string().trim().min(1).max(160),
+      })
+      .parse(input);
+    const doc = this.read(data.revisionId),
+      template = captureGroup(doc, data.groupId);
+    const result = this.run(
+      "INSERT INTO web_group_template(uid,workspace_id,name,payload,created_at) VALUES(?,?,?,?,?)",
+      id(),
+      doc.revision.workspaceId,
+      data.name,
+      JSON.stringify(template),
+      now(),
+    );
+    return { id: Number(result.lastInsertRowid), name: data.name, template };
+  }
+  projects() {
+    return this
+      .rows(`SELECT m.id,m.workspace_id workspaceId,m.name,w.name projectName,COALESCE(m.description,'') description,m.created_at createdAt,
+      (SELECT COUNT(*) FROM model_revision r WHERE r.process_model_id=m.id) revisionCount,
+      (SELECT r.id FROM model_revision r WHERE r.process_model_id=m.id ORDER BY r.status='DRAFT' DESC,r.id DESC LIMIT 1) revisionId,
+      (SELECT COUNT(*) FROM model_revision_entity e WHERE e.model_revision_id=(SELECT r.id FROM model_revision r WHERE r.process_model_id=m.id ORDER BY r.status='DRAFT' DESC,r.id DESC LIMIT 1)) entityCount
+      FROM process_model m JOIN workspace w ON w.id=m.workspace_id WHERE m.retired_at IS NULL ORDER BY m.created_at DESC,m.id DESC`);
+  }
+  createProject(input: unknown): ProcessDocument {
+    const data = projectCreateSchema.parse(input);
+    const rid = this.transaction(() => {
+      const wid = this.run(
+        "INSERT INTO workspace(uid,name,description,created_at) VALUES(?,?,?,?)",
+        id(),
+        data.name,
+        data.description,
+        now(),
+      ).lastInsertRowid;
+      const mid = this.run(
+        "INSERT INTO process_model(uid,workspace_id,name,description,created_at) VALUES(?,?,?,?,?)",
+        id(),
+        wid,
+        data.processName,
+        data.description,
+        now(),
+      ).lastInsertRowid;
+      const rid = this.run(
+        "INSERT INTO model_revision(uid,process_model_id,revision_code,purpose,status,created_at) VALUES(?,?,?,'AS_IS','DRAFT',?)",
+        id(),
+        mid,
+        "AS-IS-1",
+        now(),
+      ).lastInsertRowid;
+      this.run(
+        "INSERT INTO web_revision_version(revision_id,version) VALUES(?,0)",
+        rid,
+      );
+      return Number(rid);
+    });
+    return this.read(rid);
+  }
+  saveStateRule(rid: number, input: unknown): ProcessDocument {
+    const data = stateRuleInputSchema.parse(input);
+    return this.transaction(() => {
+      const doc = this.read(rid);
+      if (doc.revision.status !== "DRAFT")
+        throw new Error("Revisione immutabile.");
+      if (doc.revision.version !== data.version)
+        throw new ConflictError(
+          "La revisione è cambiata: ricaricare prima di salvare.",
+        );
+      const old = data.ruleId
+        ? doc.rules.find((r) => r.id === data.ruleId)
+        : undefined;
+      if (data.ruleId && (!old || !old.recipe))
+        throw new Error("Regola di stato non appartenente alla revisione.");
+      const proposed = {
+        id: data.ruleId ?? -1,
+        name: data.name,
+        purpose: data.purpose,
+        target: data.target,
+        trueState: data.trueState,
+        falseState: data.falseState,
+        recipe: data.recipe,
+      };
+      const errors = structural(
+        { ...doc, rules: [proposed] },
+        this.catalog(),
+      ).filter(
+        (i) => i.severity === "error" || i.code === "RULE_PARAMETER_UNKNOWN",
+      );
+      if (errors.length)
+        throw new Error(errors.map((e) => e.message).join("\n"));
+      const expr = this.run(
+        "INSERT INTO expression(uid,created_at) VALUES(?,?)",
+        id(),
+        now(),
+      ).lastInsertRowid;
+      const operation = (
+        code: string,
+        parent: SQLInputValue = null,
+        position = 0,
+      ) =>
+        this.run(
+          "INSERT INTO expression_node(expression_id,parent_node_id,position,node_kind,operation_code) VALUES(?,?,?,'OPERATION',?)",
+          expr,
+          parent,
+          position,
+          code,
+        ).lastInsertRowid;
+      const reference = (
+        kind: string,
+        scope: string,
+        entity: SQLInputValue,
+        property: SQLInputValue,
+        variable: SQLInputValue,
+        parent: SQLInputValue,
+        position: number,
+      ) =>
+        this.run(
+          "INSERT INTO expression_node(expression_id,parent_node_id,position,node_kind,reference_kind,reference_scope,entity_identity_id,property_definition_id,variable_name) VALUES(?,?,?,'REFERENCE',?,?,?,?,?)",
+          expr,
+          parent,
+          position,
+          kind,
+          scope,
+          entity,
+          property,
+          variable,
+        );
+      const literal = (
+        value: Value,
+        parent: SQLInputValue,
+        position: number,
+        type?: string,
+      ) => {
+        if (value === null)
+          throw new Error("Usare un valore costante esplicito.");
+        const typ =
+          type ??
+          (typeof value === "boolean"
+            ? "BOOLEAN"
+            : typeof value === "number"
+              ? "NUMBER"
+              : "TEXT");
+        this.run(
+          "INSERT INTO expression_node(expression_id,parent_node_id,position,node_kind,literal_type,literal_text,literal_integer,literal_real,literal_boolean) VALUES(?,?,?,'LITERAL',?,?,?,?,?)",
+          expr,
+          parent,
+          position,
+          typ,
+          ...this.columns(typ, value),
+        );
+      };
+      if ("kind" in data.recipe) {
+        const pre = data.recipe.identity_id;
+        if (
+          !isType(
+            doc.entities.find((e) => e.id === String(pre))!.type,
+            "ACTION",
+            this.catalog(),
+          )
+        )
+          throw new Error("Il prerequisito deve essere un’attività.");
+        const root = operation("ANY");
+        reference("ENTITY", "INSTANCE", pre, null, null, root, 0);
+        const equal = operation("EQ", root, 1);
+        const property = this.row(
+          "SELECT id FROM property_definition WHERE code='STATUS' AND workspace_id IS NULL",
+        ).id;
+        reference("PROPERTY", "INSTANCE", pre, property, null, equal, 0);
+        literal("COMPLETED", equal, 1, "ENUM");
+      } else {
+        const root = operation(data.recipe.op);
+        for (const [position, operand] of [
+          data.recipe.left,
+          data.recipe.right,
+        ].entries()) {
+          if (operand.kind === "literal")
+            literal(operand.value, root, position);
+          else if (operand.kind === "parameter")
+            reference(
+              "CONTEXT",
+              "CONTEXT",
+              null,
+              null,
+              operand.code,
+              root,
+              position,
+            );
+          else {
+            const property = this.row(
+              "SELECT id FROM property_definition WHERE code=? AND (workspace_id IS NULL OR workspace_id=?) ORDER BY workspace_id DESC LIMIT 1",
+              operand.code,
+              doc.revision.workspaceId,
+            ).id;
+            reference(
+              "PROPERTY",
+              "DEFINITION",
+              operand.identity_id,
+              property,
+              null,
+              root,
+              position,
+            );
+          }
+        }
+      }
+      const identity = old
+        ? this.row(
+            "SELECT rule_identity_id FROM rule_definition WHERE id=?",
+            old.id,
+          ).rule_identity_id
+        : this.run(
+            "INSERT INTO rule_identity(uid,workspace_id,created_at) VALUES(?,?,?)",
+            id(),
+            doc.revision.workspaceId,
+            now(),
+          ).lastInsertRowid;
+      const did = this.run(
+        "INSERT INTO rule_definition(uid,rule_identity_id,semantic,name,body_expression_id,created_at,purpose) VALUES(?,?,'ASSERTION',?,?,?,?)",
+        id(),
+        identity,
+        data.name,
+        expr,
+        now(),
+        data.purpose,
+      ).lastInsertRowid;
+      this.run(
+        "INSERT INTO state_rule_config(rule_definition_id,target_identity_id,true_state,false_state,recipe) VALUES(?,?,?,?,?)",
+        did,
+        Number(data.target),
+        data.trueState,
+        data.falseState,
+        JSON.stringify(data.recipe),
+      );
+      if (old)
+        this.run(
+          "DELETE FROM model_revision_rule WHERE model_revision_id=? AND rule_definition_id=?",
+          rid,
+          old.id,
+        );
+      this.run("INSERT INTO model_revision_rule VALUES(?,?)", rid, did);
+      this.run(
+        "INSERT INTO web_revision_version VALUES(?,1) ON CONFLICT(revision_id) DO UPDATE SET version=version+1",
+        rid,
+      );
+      return this.read(rid);
+    });
+  }
+  deleteRule(rid: number, ruleId: number, version: number): ProcessDocument {
+    return this.transaction(() => {
+      const doc = this.read(rid);
+      if (doc.revision.status !== "DRAFT")
+        throw new Error("Revisione immutabile.");
+      if (doc.revision.version !== version)
+        throw new ConflictError(
+          "La revisione è cambiata: ricaricare prima di salvare.",
+        );
+      if (!doc.rules.some((r) => r.id === ruleId))
+        throw new Error("Regola non appartenente alla revisione.");
+      this.run(
+        "DELETE FROM model_revision_rule WHERE model_revision_id=? AND rule_definition_id=?",
+        rid,
+        ruleId,
+      );
+      this.run(
+        "INSERT INTO web_revision_version VALUES(?,1) ON CONFLICT(revision_id) DO UPDATE SET version=version+1",
+        rid,
+      );
+      return this.read(rid);
+    });
   }
   decode(r: Row): Value {
     if (r.value_boolean !== undefined && r.value_boolean !== null)
